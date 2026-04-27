@@ -1,0 +1,134 @@
+package com.pdev.citizen_service.service;
+
+import com.pdev.citizen_service.dto.*;
+import com.pdev.citizen_service.exception.CitizenAlreadyExistsException;
+import com.pdev.citizen_service.exception.CitizenNotFoundException;
+import com.pdev.citizen_service.exception.KycNotVerifiedException;
+import com.pdev.citizen_service.model.Citizen;
+import com.pdev.citizen_service.model.KycStatus;
+import com.pdev.citizen_service.repository.CitizenRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class CitizenServiceImpl implements CitizenService {
+
+    private final CitizenRepository citizenRepository;
+
+    @Override
+    public CitizenProfileResponse registerCitizen(CitizenRegistrationRequest request) {
+        // Check for existing citizen
+        if (citizenRepository.existsByEmail(request.getEmail())) {
+            throw new CitizenAlreadyExistsException("Citizen with email " + request.getEmail() + " already exists");
+        }
+        if (citizenRepository.existsByPhone(request.getPhone())) {
+            throw new CitizenAlreadyExistsException("Citizen with phone " + request.getPhone() + " already exists");
+        }
+        if (citizenRepository.existsByAadhaarNumber(request.getAadhaarNumber())) {
+            throw new CitizenAlreadyExistsException("Citizen with Aadhaar " + request.getAadhaarNumber() + " already exists");
+        }
+
+        // Create and save citizen
+        Citizen citizen = Citizen.builder()
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .dateOfBirth(request.getDateOfBirth())
+                .aadhaarNumber(request.getAadhaarNumber())
+                .address(request.getAddress())
+                .state(request.getState())
+                .pincode(request.getPincode())
+                .kycStatus(KycStatus.PENDING)
+                .build();
+
+        Citizen savedCitizen = citizenRepository.save(citizen);
+        return mapToCitizenResponse(savedCitizen);
+    }
+
+    @Override
+    public CitizenProfileResponse getCitizenProfile(String id) {
+        Citizen citizen = citizenRepository.findById(id)
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + id + " not found"));
+        return mapToCitizenResponse(citizen);
+    }
+
+    private CitizenProfileResponse mapToCitizenResponse(Citizen citizen) {
+        return CitizenProfileResponse.builder()
+                .id(citizen.getId())
+                .fullName(citizen.getFullName())
+                .email(citizen.getEmail())
+                .phone(citizen.getPhone())
+                .dateOfBirth(citizen.getDateOfBirth())
+                .address(citizen.getAddress())
+                .state(citizen.getState())
+                .pincode(citizen.getPincode())
+                .kycStatus(citizen.getKycStatus())
+                .registeredAt(citizen.getRegisteredAt())
+                .kycVerifiedAt(citizen.getKycVerifiedAt())
+                .build();
+    }
+
+    @Override
+    public void initiateKyc(String citizenId, KycInitiateRequest request) {
+        Citizen citizen = citizenRepository.findById(citizenId)
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+
+        if (citizen.getKycStatus() != KycStatus.PENDING) {
+            throw new IllegalStateException("KYC already initiated or completed for citizen " + citizenId);
+        }
+
+        if (!citizen.getAadhaarNumber().equals(request.getAadhaarNumber())) {
+            throw new IllegalArgumentException("Aadhaar number does not match");
+        }
+
+        citizen.setKycStatus(KycStatus.INITIATED);
+        citizen.setKycInitiatedAt(LocalDateTime.now());
+        citizenRepository.save(citizen);
+
+        // TODO: Publish KycInitiationEvent to ekyc-service via Kafka
+    }
+
+    @Override
+    public void fetchDocument(String citizenId, DocumentFetchRequest request) {
+        Citizen citizen = citizenRepository.findById(citizenId)
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+
+        if (citizen.getKycStatus() != KycStatus.VERIFIED) {
+            throw new KycNotVerifiedException("KYC must be verified to fetch documents");
+        }
+
+        // TODO: Publish DocumentFetchRequestEvent to document-service via Kafka
+    }
+
+    @Override
+    public void requestCertificate(String citizenId, CertificateRequest request) {
+        Citizen citizen = citizenRepository.findById(citizenId)
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+
+        if (citizen.getKycStatus() != KycStatus.VERIFIED) {
+            throw new KycNotVerifiedException("KYC must be verified to request certificates");
+        }
+
+        // TODO: Publish CertificateIssuanceEvent to certificate-service via Kafka
+    }
+
+    @Override
+    public List<ServiceRequestResponse> getAvailableServices(String citizenId) {
+        // Ensure citizen exists
+        citizenRepository.findById(citizenId)
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+
+        // TODO: Fetch from service-catalog-service; for now, return hardcoded list
+        return Arrays.asList(
+                new ServiceRequestResponse("1", "Aadhaar Card", "Get your Aadhaar card", "AVAILABLE", false),
+                new ServiceRequestResponse("2", "PAN Card", "Apply for PAN card", "AVAILABLE", true),
+                new ServiceRequestResponse("3", "Driving License", "Renew driving license", "AVAILABLE", true),
+                new ServiceRequestResponse("4", "Birth Certificate", "Request birth certificate", "AVAILABLE", true)
+        );
+    }
+}

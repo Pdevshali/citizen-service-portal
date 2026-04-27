@@ -1,0 +1,20 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: citizen-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/citizenDb
+    username: postgres1
+    password: mypassword
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
