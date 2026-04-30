@@ -1,20 +1,22 @@
-package com.pdev.citizen_service.dto;
+package com.pdev.ekyc_service.dto;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 /**
- * DTO for initiating KYC verification.
+ * Request payload for POST /api/kyc/generate-otp
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KycInitiateRequest {
+public class GenerateOtpRequest {
+
     @NotBlank(message = "Citizen ID is required")
-    String citizenId;
+    private String citizenId;
+
     @NotBlank(message = "Aadhaar number is required")
     @Pattern(regexp = "^\\d{12}$", message = "Aadhaar must be a 12-digit number")
     private String aadhaarNumber;

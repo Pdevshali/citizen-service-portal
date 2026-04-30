@@ -8,6 +8,7 @@ import com.pdev.citizen_service.model.Citizen;
 import com.pdev.citizen_service.model.KycStatus;
 import com.pdev.citizen_service.repository.CitizenRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CitizenServiceImpl implements CitizenService {
 
     private final CitizenRepository citizenRepository;
@@ -23,6 +25,7 @@ public class CitizenServiceImpl implements CitizenService {
     @Override
     public CitizenProfileResponse registerCitizen(CitizenRegistrationRequest request) {
         // Check for existing citizen
+        log.info("entering registerCitizen method");
         if (citizenRepository.existsByEmail(request.getEmail())) {
             throw new CitizenAlreadyExistsException("Citizen with email " + request.getEmail() + " already exists");
         }
@@ -52,6 +55,7 @@ public class CitizenServiceImpl implements CitizenService {
 
     @Override
     public CitizenProfileResponse getCitizenProfile(String id) {
+        log.info("entering getCitizenProfile method");
         Citizen citizen = citizenRepository.findById(id)
                 .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + id + " not found"));
         return mapToCitizenResponse(citizen);
@@ -74,12 +78,14 @@ public class CitizenServiceImpl implements CitizenService {
     }
 
     @Override
-    public void initiateKyc(String citizenId, KycInitiateRequest request) {
-        Citizen citizen = citizenRepository.findById(citizenId)
-                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+    public void initiateKyc(KycInitiateRequest request) {
+        log.info("initiating initiateKyc method for citizenId: {}", request.getCitizenId());
+
+        Citizen citizen = citizenRepository.findById(request.getCitizenId())
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + request.getCitizenId() + " not found"));
 
         if (citizen.getKycStatus() != KycStatus.PENDING) {
-            throw new IllegalStateException("KYC already initiated or completed for citizen " + citizenId);
+            throw new IllegalStateException("KYC already initiated or completed for citizen " + request.getCitizenId());
         }
 
         if (!citizen.getAadhaarNumber().equals(request.getAadhaarNumber())) {
@@ -95,6 +101,7 @@ public class CitizenServiceImpl implements CitizenService {
 
     @Override
     public void fetchDocument(String citizenId, DocumentFetchRequest request) {
+        log.info("fetching documents for citizenId: {}", citizenId);
         Citizen citizen = citizenRepository.findById(citizenId)
                 .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
 

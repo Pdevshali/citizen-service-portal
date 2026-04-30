@@ -1,0 +1,36 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: ekyc-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/kycSessionDb
+    username: postgres1
+    password: mypassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: 'com.pdev.ekyc_service.kafka.events'
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: ekyc-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      properties:
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: 'com.pdev.ekyc_service.kafka.events.KycInitiationEvent'
+        spring.json.trusted.packages: 'com.pdev.ekyc_service.kafka.events'
+
+uidai:
+  api:
+    base-url: https://mock.uidai.gov.in

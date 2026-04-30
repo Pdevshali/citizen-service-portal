@@ -31,9 +31,9 @@ public class CitizenController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{id}/initiate-kyc")
-    public ResponseEntity<ApiResponse<Void>> initiateKyc(@PathVariable String id, @Valid @RequestBody KycInitiateRequest request) {
-        citizenService.initiateKyc(id, request);
+    @PostMapping("/initiate-kyc")
+    public ResponseEntity<ApiResponse<Void>> initiateKyc(@Valid @RequestBody KycInitiateRequest request) {
+        citizenService.initiateKyc(request);
         ApiResponse<Void> response = new ApiResponse<>(true, "KYC initiation started successfully", null);
         return ResponseEntity.ok(response);
     }

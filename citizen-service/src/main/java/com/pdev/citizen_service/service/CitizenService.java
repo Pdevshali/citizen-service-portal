@@ -11,7 +11,7 @@ public interface CitizenService {
 
     CitizenProfileResponse getCitizenProfile(String id);
 
-    void initiateKyc(String citizenId, KycInitiateRequest request);
+    void initiateKyc(KycInitiateRequest request);
 
     void fetchDocument(String citizenId, DocumentFetchRequest request);
 
