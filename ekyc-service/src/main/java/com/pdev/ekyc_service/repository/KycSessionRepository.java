@@ -15,4 +15,6 @@ public interface KycSessionRepository extends JpaRepository<KycSession, String> 
     Optional<KycSession> findByTxnId(String txnId);
 
     Optional<KycSession> findByCitizenId(String citizenId);
+    
+    Optional<KycSession> findTopByCitizenIdOrderByCreatedAtDesc(String citizenId);
 }

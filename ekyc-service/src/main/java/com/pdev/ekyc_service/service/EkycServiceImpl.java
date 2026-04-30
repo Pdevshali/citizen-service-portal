@@ -31,6 +31,7 @@ public class EkycServiceImpl implements EkycService {
 
     @Override
     public GenerateOtpResponse generateOtp(GenerateOtpRequest request) {
+        log.info("Generating OTP for citizen: {}", request.getCitizenId());
         try {
             // Call UIDAI mock API to generate OTP
             UidaiOtpResponse uidaiResponse = uidaiApiClient.generateOtp(request.getAadhaarNumber());
@@ -64,6 +65,7 @@ public class EkycServiceImpl implements EkycService {
 
     @Override
     public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
+        log.info("Verifying OTP for citizen: {}", request.getTxnId());
         KycSession session = kycSessionRepository.findByTxnId(request.getTxnId())
                 .orElseThrow(() -> new KycSessionNotFoundException("Invalid transaction ID"));
 
@@ -107,6 +109,8 @@ public class EkycServiceImpl implements EkycService {
                     session.getVerifiedAt(),
                     encryptedDemographicData
             );
+
+            log.info("Publishing KYC completed event: {}", event);
             kafkaProducer.publishKycCompletedEvent(event);
 
             log.info("OTP verified via UIDAI for citizen: {}", session.getCitizenId());
@@ -123,24 +127,41 @@ public class EkycServiceImpl implements EkycService {
 
     @Override
     public KycStatusResponse getKycStatus(String citizenId) {
-        KycSession session = kycSessionRepository.findByCitizenId(citizenId)
-                .orElseThrow(() -> new KycSessionNotFoundException("No KYC session found for citizen: " + citizenId));
+        log.info("Getting KYC status for citizen: {}", citizenId);
+        
+        try {
+            // Find the most recent session for this citizen
+            KycSession session = kycSessionRepository.findTopByCitizenIdOrderByCreatedAtDesc(citizenId)
+                    .orElseThrow(() -> new KycSessionNotFoundException("No KYC session found for citizen: " + citizenId));
 
-        String demographicData = null;
-        if (session.getDemographicDataEncrypted() != null) {
-            try {
-                demographicData = EncryptionUtil.decrypt(session.getDemographicDataEncrypted());
-            } catch (Exception e) {
-                log.error("Error decrypting demographic data: {}", e.getMessage(), e);
+            log.info("Found KYC session: id={}, status={}, txnId={}", session.getId(), session.getStatus(), session.getTxnId());
+
+            String demographicData = null;
+            if (session.getDemographicDataEncrypted() != null && !session.getDemographicDataEncrypted().isEmpty()) {
+                try {
+                    demographicData = EncryptionUtil.decrypt(session.getDemographicDataEncrypted());
+                    log.info("Successfully decrypted demographic data for citizen: {}", citizenId);
+                } catch (Exception e) {
+                    log.error("Error decrypting demographic data for citizen {}: {}", citizenId, e.getMessage(), e);
+                    // Don't fail the entire request, just return null demographic data
+                    demographicData = null;
+                }
             }
-        }
 
-        return new KycStatusResponse(
-                session.getCitizenId(),
-                session.getStatus(),
-                session.getVerifiedAt(),
-                demographicData
-        );
+            return new KycStatusResponse(
+                    session.getCitizenId(),
+                    session.getStatus(),
+                    session.getVerifiedAt(),
+                    demographicData
+            );
+            
+        } catch (KycSessionNotFoundException e) {
+            log.warn("KYC session not found for citizen: {}", citizenId);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting KYC status for citizen {}: {}", citizenId, e.getMessage(), e);
+            throw new RuntimeException("Failed to get KYC status", e);
+        }
     }
 
     @Override

@@ -1,61 +1,77 @@
 package com.pdev.ekyc_service.service;
 
-import com.pdev.ekyc_service.dto.UidaiOtpRequest;
 import com.pdev.ekyc_service.dto.UidaiOtpResponse;
-import com.pdev.ekyc_service.dto.UidaiVerifyRequest;
 import com.pdev.ekyc_service.dto.UidaiVerifyResponse;
+import com.pdev.ekyc_service.model.KycSession;
+import com.pdev.ekyc_service.repository.KycSessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.UUID;
 
 /**
- * Client for interacting with UIDAI mock API.
+ * Mock UIDAI API client that simulates UIDAI responses using database persistence.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UidaiApiClient {
 
-    private final WebClient webClient;
-
-    @Value("${uidai.api.base-url:https://mock.uidai.gov.in}")
-    private String baseUrl;
+    private final KycSessionRepository kycSessionRepository;
+    private static final String MOCK_OTP = "123456"; // Fixed mock OTP for testing
 
     public UidaiOtpResponse generateOtp(String aadhaar) {
-        UidaiOtpRequest request = new UidaiOtpRequest();
-        request.setAadhaarNumber(aadhaar);
-
-        log.info("Calling UIDAI mock API to generate OTP for Aadhaar: {}", maskAadhaar(aadhaar));
-
-        return webClient.post()
-                .uri(baseUrl + "/otp/generate")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(UidaiOtpResponse.class)
-                .doOnNext(response -> log.info("UIDAI OTP generation response: {}", response.getStatus()))
-                .doOnError(error -> log.error("Error calling UIDAI OTP generate API: {}", error.getMessage()))
-                .block(); // Synchronous for simplicity
+        log.info("Mock UIDAI: Generating OTP for Aadhaar: {}", maskAadhaar(aadhaar));
+        
+        // Generate mock transaction ID
+        String txnId = "TXN_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        
+        UidaiOtpResponse response = new UidaiOtpResponse();
+        response.setTxnId(txnId);
+        response.setStatus("success");
+        response.setMessage("OTP generated successfully");
+        
+        log.info("Mock UIDAI: OTP generated with txnId: {}", txnId);
+        return response;
     }
 
     public UidaiVerifyResponse verifyOtp(String txnId, String otp) {
-        UidaiVerifyRequest request = new UidaiVerifyRequest();
-        request.setTxnId(txnId);
-        request.setOtp(otp);
-
-        log.info("Calling UIDAI mock API to verify OTP for txnId: {}", txnId);
-
-        return webClient.post()
-                .uri(baseUrl + "/otp/verify")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(UidaiVerifyResponse.class)
-                .doOnNext(response -> log.info("UIDAI OTP verification response: {}", response.getStatus()))
-                .doOnError(error -> log.error("Error calling UIDAI OTP verify API: {}", error.getMessage()))
-                .block(); // Synchronous for simplicity
+        log.info("Mock UIDAI: Verifying OTP for txnId: {}", txnId);
+        
+        UidaiVerifyResponse response = new UidaiVerifyResponse();
+        
+        // Check if transaction exists in database
+        KycSession session = kycSessionRepository.findByTxnId(txnId).orElse(null);
+        if (session == null) {
+            response.setStatus("failed");
+            response.setMessage("Invalid transaction ID");
+            return response;
+        }
+        
+        // Verify OTP (always "123456" in mock)
+        if (MOCK_OTP.equals(otp)) {
+            response.setStatus("success");
+            response.setMessage("OTP verified successfully");
+            
+            // Mock demographic data
+            response.setName("John Doe");
+            response.setDob("1990-01-01");
+            response.setGender("M");
+            response.setAddress("123 Main Street, Bangalore, Karnataka 560001");
+            response.setPhone("9876543210");
+            
+            log.info("Mock UIDAI: OTP verified successfully for txnId: {}", txnId);
+        } else {
+            response.setStatus("failed");
+            response.setMessage("Invalid OTP");
+            log.warn("Mock UIDAI: OTP verification failed for txnId: {}", txnId);
+        }
+        
+        return response;
     }
 
+    // Utility method to mask Aadhaar for logging
     private String maskAadhaar(String aadhaar) {
         if (aadhaar == null || aadhaar.length() < 4) return "****";
         return "****" + aadhaar.substring(aadhaar.length() - 4);

@@ -20,10 +20,13 @@ public class EncryptionUtil {
     private static final int GCM_TAG_LENGTH = 16;
 
     // In production, this should be loaded from a secure key store
-    private static final String SECRET_KEY = "MySuperSecretKeyForAES256Encryption!"; // 32 bytes
+    private static final byte[] SECRET_KEY_BYTES = new byte[] {
+        'M', 'y', 'S', 'u', 'p', 'e', 'r', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e', 'y',
+        'F', 'o', 'r', 'A', 'E', 'S', '2', '5', '6', 'E', 'n', 'c', '1', '2', '3', '4'
+    }; // Exactly 32 bytes
 
     private static SecretKey getSecretKey() {
-        return new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), "AES");
+        return new SecretKeySpec(SECRET_KEY_BYTES, "AES");
     }
 
     public static String encrypt(String plainText) throws Exception {

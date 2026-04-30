@@ -31,6 +31,3 @@ spring:
         spring.json.value.default.type: 'com.pdev.ekyc_service.kafka.events.KycInitiationEvent'
         spring.json.trusted.packages: 'com.pdev.ekyc_service.kafka.events'
 
-uidai:
-  api:
-    base-url: https://mock.uidai.gov.in

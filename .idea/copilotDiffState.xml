@@ -107,15 +107,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/UidaiVerifyResponse.java">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/UidaiVerifyResponse.java" />
-              <option name="originalContent" value="package com.pdev.ekyc_service.dto;" />
-              <option name="updatedContent" value="package com.pdev.ekyc_service.dto;&#10;&#10;import lombok.AllArgsConstructor;&#10;import lombok.Data;&#10;import lombok.NoArgsConstructor;&#10;&#10;/**&#10; * Response from UIDAI mock API for OTP verification.&#10; */&#10;@Data&#10;@NoArgsConstructor&#10;@AllArgsConstructor&#10;public class UidaiVerifyResponse {&#10;&#10;    private String status;&#10;    private String message;&#10;    private String name;&#10;    private String dob;&#10;    private String gender;&#10;    private String address;&#10;    private String phone;&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/VerifyOtpRequest.java">
           <value>
             <PendingDiffInfo>
@@ -129,22 +120,6 @@
             <PendingDiffInfo>
               <option name="filePath" value="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/VerifyOtpResponse.java" />
               <option name="updatedContent" value="package com.pdev.ekyc_service.dto;&#10;&#10;import com.pdev.ekyc_service.model.KycStatus;&#10;import lombok.AllArgsConstructor;&#10;import lombok.Data;&#10;import lombok.NoArgsConstructor;&#10;&#10;/**&#10; * Response payload for POST /api/kyc/verify-otp&#10; */&#10;@Data&#10;@NoArgsConstructor&#10;@AllArgsConstructor&#10;public class VerifyOtpResponse {&#10;    private String citizenId;&#10;    private KycStatus status;&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/exception/GlobalExceptionHandler.java">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/exception/GlobalExceptionHandler.java" />
-              <option name="updatedContent" value="package com.pdev.ekyc_service.exception;&#10;&#10;import com.pdev.ekyc_service.dto.ApiResponse;&#10;import org.springframework.http.HttpStatus;&#10;import org.springframework.http.ResponseEntity;&#10;import org.springframework.web.bind.annotation.ControllerAdvice;&#10;import org.springframework.web.bind.annotation.ExceptionHandler;&#10;&#10;/**&#10; * Global exception handler for all controllers.&#10; * Catches exceptions and returns clean JSON responses.&#10; */&#10;@ControllerAdvice&#10;public class GlobalExceptionHandler {&#10;&#10;    @ExceptionHandler(KycSessionNotFoundException.class)&#10;    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleKycSessionNotFound(KycSessionNotFoundException ex) {&#10;        ApiResponse&lt;Void&gt; response = new ApiResponse&lt;&gt;(false, ex.getMessage());&#10;        return new ResponseEntity&lt;&gt;(response, HttpStatus.NOT_FOUND);&#10;    }&#10;&#10;    @ExceptionHandler(OtpVerificationFailedException.class)&#10;    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleOtpVerificationFailed(OtpVerificationFailedException ex) {&#10;        ApiResponse&lt;Void&gt; response = new ApiResponse&lt;&gt;(false, ex.getMessage());&#10;        return new ResponseEntity&lt;&gt;(response, HttpStatus.BAD_REQUEST);&#10;    }&#10;&#10;    @ExceptionHandler(Exception.class)&#10;    public ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; handleGenericException(Exception ex) {&#10;        ApiResponse&lt;Void&gt; response = new ApiResponse&lt;&gt;(false, &quot;An unexpected error occurred&quot;);&#10;        return new ResponseEntity&lt;&gt;(response, HttpStatus.INTERNAL_SERVER_ERROR);&#10;    }&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
-        <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/repository/KycSessionRepository.java">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/repository/KycSessionRepository.java" />
-              <option name="updatedContent" value="package com.pdev.ekyc_service.repository;&#10;&#10;import com.pdev.ekyc_service.model.KycSession;&#10;import org.springframework.data.jpa.repository.JpaRepository;&#10;import org.springframework.stereotype.Repository;&#10;&#10;import java.util.Optional;&#10;&#10;/**&#10; * Repository for KycSession entity.&#10; */&#10;@Repository&#10;public interface KycSessionRepository extends JpaRepository&lt;KycSession, String&gt; {&#10;&#10;    Optional&lt;KycSession&gt; findByTxnId(String txnId);&#10;&#10;    Optional&lt;KycSession&gt; findByCitizenId(String citizenId);&#10;}" />
             </PendingDiffInfo>
           </value>
         </entry>
