@@ -1,4 +1,4 @@
-package com.pdev.ekyc_service.kafka.events;
+package com.pdev.citizen_service.kafka.events;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Event consumed from citizen-service when KYC initiation is requested.
+ * Event published when KYC is initiated for a citizen.
+ * Consumed by e-KYC service to start the OTP generation process.
  */
 @Data
 @NoArgsConstructor

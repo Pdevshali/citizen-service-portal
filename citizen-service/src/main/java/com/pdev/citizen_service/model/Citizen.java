@@ -23,7 +23,7 @@ public class Citizen {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
+    @Column(name = "id", updatable = false, nullable = false, unique = true)
     private String id;
 
     // ── Personal details ────────────────────────────────────────────────────
@@ -64,6 +64,9 @@ public class Citizen {
 
     @Column(name = "kyc_verified_at")
     private LocalDateTime kycVerifiedAt;
+
+    @Column(name = "demographic_data_encrypted")
+    private String demographicDataEncrypted;
 
     // ── Audit ────────────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ spring:
   application:
     name: citizen-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/citizenDb
+    url: jdbc:postgresql://localhost:5433/citizenDb
     username: postgres1
     password: mypassword
     driver-class-name: org.postgresql.Driver
@@ -17,4 +17,30 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: citizen-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      properties:
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: 'com.pdev.citizen_service.kafka.events.KycCompletedEvent'
+        spring.json.trusted.packages: '*'
+
+logging:
+  level:
+    com.pdev.citizen_service: DEBUG
+    org.springframework.kafka: INFO
 

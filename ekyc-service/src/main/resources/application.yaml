@@ -29,5 +29,5 @@ spring:
       properties:
         spring.json.use.type.headers: false
         spring.json.value.default.type: 'com.pdev.ekyc_service.kafka.events.KycInitiationEvent'
-        spring.json.trusted.packages: 'com.pdev.ekyc_service.kafka.events'
+        spring.json.trusted.packages: '*'
 

@@ -4,6 +4,8 @@ import com.pdev.citizen_service.dto.*;
 import com.pdev.citizen_service.exception.CitizenAlreadyExistsException;
 import com.pdev.citizen_service.exception.CitizenNotFoundException;
 import com.pdev.citizen_service.exception.KycNotVerifiedException;
+import com.pdev.citizen_service.kafka.events.KycInitiationEvent;
+import com.pdev.citizen_service.kafka.producer.CitizenKafkaProducer;
 import com.pdev.citizen_service.model.Citizen;
 import com.pdev.citizen_service.model.KycStatus;
 import com.pdev.citizen_service.repository.CitizenRepository;
@@ -21,6 +23,7 @@ import java.util.List;
 public class CitizenServiceImpl implements CitizenService {
 
     private final CitizenRepository citizenRepository;
+    private final CitizenKafkaProducer kafkaProducer;
 
     @Override
     public CitizenProfileResponse registerCitizen(CitizenRegistrationRequest request) {
@@ -96,7 +99,15 @@ public class CitizenServiceImpl implements CitizenService {
         citizen.setKycInitiatedAt(LocalDateTime.now());
         citizenRepository.save(citizen);
 
-        // TODO: Publish KycInitiationEvent to ekyc-service via Kafka
+        // Publish KycInitiationEvent to ekyc-service via Kafka
+        KycInitiationEvent event = new KycInitiationEvent(
+                request.getCitizenId(),
+                request.getAadhaarNumber(),
+                citizen.getKycInitiatedAt()
+        );
+        kafkaProducer.publishKycInitiationEvent(event);
+        
+        log.info("KYC initiation event published for citizen: {}", request.getCitizenId());
     }
 
     @Override

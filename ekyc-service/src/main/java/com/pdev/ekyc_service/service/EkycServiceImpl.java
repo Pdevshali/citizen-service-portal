@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pdev.ekyc_service.dto.*;
 import com.pdev.ekyc_service.exception.KycSessionNotFoundException;
 import com.pdev.ekyc_service.exception.OtpVerificationFailedException;
-import com.pdev.ekyc_service.kafka.events.KycInitiateRequest;
+import com.pdev.ekyc_service.kafka.events.KycCompletedEvent;
 import com.pdev.ekyc_service.kafka.events.KycInitiationEvent;
 import com.pdev.ekyc_service.kafka.producer.EkycKafkaProducer;
 import com.pdev.ekyc_service.model.KycSession;
@@ -104,7 +104,7 @@ public class EkycServiceImpl implements EkycService {
             kycSessionRepository.save(session);
 
             // Publish event
-            KycInitiateRequest event = new KycInitiateRequest(
+            KycCompletedEvent event = new KycCompletedEvent(
                     session.getCitizenId(),
                     KycStatus.VERIFIED,
                     session.getVerifiedAt(),
@@ -112,7 +112,7 @@ public class EkycServiceImpl implements EkycService {
             );
 
             log.info("Publishing KYC completed event: {}", event);
-//            kafkaProducer.publishKycCompletedEvent(event);
+            kafkaProducer.publishKycCompletedEvent(event);
 
             log.info("OTP verified via UIDAI for citizen: {}", session.getCitizenId());
 
@@ -129,7 +129,7 @@ public class EkycServiceImpl implements EkycService {
     @Override
     public KycStatusResponse getKycStatus(String citizenId) {
         log.info("Getting KYC status for citizen: {}", citizenId);
-        
+
         try {
             // First try to find the most recent VERIFIED session
             Optional<KycSession> verifiedSession = kycSessionRepository.findTopByCitizenIdAndStatusOrderByCreatedAtDesc(citizenId, KycStatus.VERIFIED);
