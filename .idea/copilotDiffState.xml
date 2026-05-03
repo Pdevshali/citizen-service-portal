@@ -98,15 +98,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/UidaiOtpResponse.java">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/UidaiOtpResponse.java" />
-              <option name="originalContent" value="package com.pdev.ekyc_service.dto;" />
-              <option name="updatedContent" value="package com.pdev.ekyc_service.dto;&#10;&#10;import lombok.AllArgsConstructor;&#10;import lombok.Data;&#10;import lombok.NoArgsConstructor;&#10;&#10;/**&#10; * Response from UIDAI mock API for OTP generation.&#10; */&#10;@Data&#10;@NoArgsConstructor&#10;@AllArgsConstructor&#10;public class UidaiOtpResponse {&#10;&#10;    private String txnId;&#10;    private String status;&#10;    private String message;&#10;}" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
         <entry key="$PROJECT_DIR$/ekyc-service/src/main/java/com/pdev/ekyc_service/dto/VerifyOtpRequest.java">
           <value>
             <PendingDiffInfo>

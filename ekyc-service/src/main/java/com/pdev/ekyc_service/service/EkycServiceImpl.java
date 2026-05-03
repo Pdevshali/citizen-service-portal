@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Service
@@ -111,7 +112,7 @@ public class EkycServiceImpl implements EkycService {
             );
 
             log.info("Publishing KYC completed event: {}", event);
-            kafkaProducer.publishKycCompletedEvent(event);
+//            kafkaProducer.publishKycCompletedEvent(event);
 
             log.info("OTP verified via UIDAI for citizen: {}", session.getCitizenId());
 
@@ -130,11 +131,19 @@ public class EkycServiceImpl implements EkycService {
         log.info("Getting KYC status for citizen: {}", citizenId);
         
         try {
-            // Find the most recent session for this citizen
-            KycSession session = kycSessionRepository.findTopByCitizenIdOrderByCreatedAtDesc(citizenId)
-                    .orElseThrow(() -> new KycSessionNotFoundException("No KYC session found for citizen: " + citizenId));
-
-            log.info("Found KYC session: id={}, status={}, txnId={}", session.getId(), session.getStatus(), session.getTxnId());
+            // First try to find the most recent VERIFIED session
+            Optional<KycSession> verifiedSession = kycSessionRepository.findTopByCitizenIdAndStatusOrderByCreatedAtDesc(citizenId, KycStatus.VERIFIED);
+            
+            KycSession session;
+            if (verifiedSession.isPresent()) {
+                session = verifiedSession.get();
+                log.info("Found VERIFIED KYC session: id={}, txnId={}", session.getId(), session.getTxnId());
+            } else {
+                // If no verified session, get the most recent session (could be PENDING or FAILED)
+                session = kycSessionRepository.findTopByCitizenIdOrderByCreatedAtDesc(citizenId)
+                        .orElseThrow(() -> new KycSessionNotFoundException("No KYC session found for citizen: " + citizenId));
+                log.info("Found most recent KYC session: id={}, status={}, txnId={}", session.getId(), session.getStatus(), session.getTxnId());
+            }
 
             String demographicData = null;
             if (session.getDemographicDataEncrypted() != null && !session.getDemographicDataEncrypted().isEmpty()) {

@@ -1,9 +1,11 @@
 package com.pdev.ekyc_service.repository;
 
 import com.pdev.ekyc_service.model.KycSession;
+import com.pdev.ekyc_service.model.KycStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -17,4 +19,8 @@ public interface KycSessionRepository extends JpaRepository<KycSession, String> 
     Optional<KycSession> findByCitizenId(String citizenId);
     
     Optional<KycSession> findTopByCitizenIdOrderByCreatedAtDesc(String citizenId);
+    
+    Optional<KycSession> findTopByCitizenIdAndStatusOrderByCreatedAtDesc(String citizenId, KycStatus status);
+    
+    List<KycSession> findByCitizenIdOrderByCreatedAtDesc(String citizenId);
 }
