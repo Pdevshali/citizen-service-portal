@@ -87,27 +87,42 @@ public class CitizenServiceImpl implements CitizenService {
         Citizen citizen = citizenRepository.findById(request.getCitizenId())
                 .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + request.getCitizenId() + " not found"));
 
+        // Check if KYC is not already initiated
         if (citizen.getKycStatus() != KycStatus.PENDING) {
             throw new IllegalStateException("KYC already initiated or completed for citizen " + request.getCitizenId());
         }
 
-        if (!citizen.getAadhaarNumber().equals(request.getAadhaarNumber())) {
-            throw new IllegalArgumentException("Aadhaar number does not match");
+        // Validate Aadhaar number is registered
+        if (citizen.getAadhaarNumber() == null || citizen.getAadhaarNumber().isEmpty()) {
+            throw new IllegalArgumentException("Citizen has no Aadhaar number registered. Please complete registration first.");
         }
 
+        // Verify Aadhaar number matches
+        if (!citizen.getAadhaarNumber().equals(request.getAadhaarNumber())) {
+            log.warn("Aadhaar mismatch for citizen {}: expected={}, provided={}",
+                    request.getCitizenId(), citizen.getAadhaarNumber(), request.getAadhaarNumber());
+            throw new IllegalArgumentException("Aadhaar number does not match citizen records");
+        }
+
+        // Update citizen KYC status
         citizen.setKycStatus(KycStatus.INITIATED);
         citizen.setKycInitiatedAt(LocalDateTime.now());
         citizenRepository.save(citizen);
+        log.info("Updated citizen {} to INITIATED status", request.getCitizenId());
 
         // Publish KycInitiationEvent to ekyc-service via Kafka
-        KycInitiationEvent event = new KycInitiationEvent(
-                request.getCitizenId(),
-                request.getAadhaarNumber(),
-                citizen.getKycInitiatedAt()
-        );
-        kafkaProducer.publishKycInitiationEvent(event);
-        
-        log.info("KYC initiation event published for citizen: {}", request.getCitizenId());
+        try {
+            KycInitiationEvent event = new KycInitiationEvent(
+                    request.getCitizenId(),
+                    request.getAadhaarNumber(),
+                    citizen.getKycInitiatedAt()
+            );
+            kafkaProducer.publishKycInitiationEvent(event);
+            log.info("KYC initiation event published for citizen: {}", request.getCitizenId());
+        } catch (Exception e) {
+            log.error("Failed to publish KYC initiation event for citizen {}: {}", request.getCitizenId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to initiate KYC: " + e.getMessage(), e);
+        }
     }
 
     @Override

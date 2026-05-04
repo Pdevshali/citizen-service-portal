@@ -6,33 +6,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * Kafka producer for publishing KYC-related events.
- */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EkycKafkaProducer {
 
-    private final KafkaTemplate<String, KycCompletedEvent> kafkaTemplate;
+    // KafkaTemplate<String, Object> matches the bean in KafkaConfig exactly
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String KYC_COMPLETED_TOPIC = "kyc.verification.completed";
 
-    public void publishKycCompletedEvent(KycCompletedEvent event) {
-        try {
-            log.info("Publishing KYC completed event for citizen: {}", event.getCitizenId());
-            kafkaTemplate.send(KYC_COMPLETED_TOPIC, event.getCitizenId(), event)
-                    .whenComplete((result, exception) -> {
-                        if (exception == null) {
-                            log.info("Successfully published KYC completed event for citizen: {}", event.getCitizenId());
-                        } else {
-                            log.error("Failed to publish KYC completed event for citizen {}: {}",
-                                    event.getCitizenId(), exception.getMessage(), exception);
-                        }
-                    });
-        } catch (Exception e) {
-            log.error("Error publishing KYC completed event for citizen {}: {}",
-                    event.getCitizenId(), e.getMessage(), e);
-        }
+    public void publishKycCompleted(KycCompletedEvent event) {
+        log.info("[KAFKA] Publishing KYC completed: citizenId={}, status={}",
+                event.getCitizenId(), event.getStatus());
+
+        kafkaTemplate.send(KYC_COMPLETED_TOPIC, event.getCitizenId(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex == null)
+                        log.info("[KAFKA] ✓ KYC completed sent: citizenId={}", event.getCitizenId());
+                    else
+                        log.error("[KAFKA] ✗ KYC completed failed: {}", ex.getMessage(), ex);
+                });
     }
 }

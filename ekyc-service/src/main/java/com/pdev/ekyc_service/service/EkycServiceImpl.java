@@ -112,7 +112,7 @@ public class EkycServiceImpl implements EkycService {
             );
 
             log.info("Publishing KYC completed event: {}", event);
-            kafkaProducer.publishKycCompletedEvent(event);
+            kafkaProducer.publishKycCompleted(event);
 
             log.info("OTP verified via UIDAI for citizen: {}", session.getCitizenId());
 
