@@ -1,6 +1,7 @@
 package com.pdev.ekyc_service.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pdev.ekyc_service.client.CitizenServiceClient;
 import com.pdev.ekyc_service.dto.*;
 import com.pdev.ekyc_service.exception.KycSessionNotFoundException;
 import com.pdev.ekyc_service.exception.OtpVerificationFailedException;
@@ -13,6 +14,7 @@ import com.pdev.ekyc_service.repository.KycSessionRepository;
 import com.pdev.ekyc_service.util.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,13 +31,21 @@ public class EkycServiceImpl implements EkycService {
     private final EkycKafkaProducer kafkaProducer;
     private final UidaiApiClient uidaiApiClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final CitizenServiceClient citizenServiceClient;
 
     @Override
     public GenerateOtpResponse generateOtp(GenerateOtpRequest request) {
+
         log.info("Generating OTP for citizen: {}", request.getCitizenId());
         try {
             // Call UIDAI mock API to generate OTP
             UidaiOtpResponse uidaiResponse = uidaiApiClient.generateOtp(request.getAadhaarNumber());
+
+            Boolean citizenExists = citizenServiceClient.validateCitizen(request.getCitizenId());
+            if (!citizenExists) {
+                throw new RuntimeException("Citizen not found");
+            }
+            log.info("Citizen found: {}", request.getCitizenId());
 
             if (!"success".equals(uidaiResponse.getStatus())) {
                 throw new RuntimeException("UIDAI OTP generation failed: " + uidaiResponse.getMessage());

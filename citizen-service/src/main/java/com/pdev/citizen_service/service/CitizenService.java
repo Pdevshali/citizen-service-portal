@@ -18,4 +18,6 @@ public interface CitizenService {
     void requestCertificate(String citizenId, CertificateRequest request);
 
     List<ServiceRequestResponse> getAvailableServices(String citizenId);
+
+    Boolean existsByCitizenId(String id);
 }

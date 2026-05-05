@@ -15,8 +15,6 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.web.reactive.function.client.WebClient;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,9 +117,4 @@ public class KafkaConfig {
         return factory;
     }
 
-    @Bean
-    public WebClient webClient() {
-        return WebClient.builder()
-                .build();
-    }
 }

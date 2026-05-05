@@ -24,6 +24,11 @@ public class CitizenController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/validate")
+    public ResponseEntity<Boolean> validateCitizen(@PathVariable String id){
+        return ResponseEntity.ok(citizenService.existsByCitizenId(id));
+    }
+
     @GetMapping("/{id}/profile")
     public ResponseEntity<ApiResponse<CitizenProfileResponse>> getCitizenProfile(@PathVariable String id) {
         CitizenProfileResponse profile = citizenService.getCitizenProfile(id);

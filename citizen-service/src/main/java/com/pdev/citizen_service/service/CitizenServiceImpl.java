@@ -164,4 +164,10 @@ public class CitizenServiceImpl implements CitizenService {
                 new ServiceRequestResponse("4", "Birth Certificate", "Request birth certificate", "AVAILABLE", true)
         );
     }
+
+    @Override
+    public Boolean existsByCitizenId(String id) {
+        log.info("Checking if citizen with id {} exists", id);
+        return citizenRepository.existsById(id);
+    }
 }

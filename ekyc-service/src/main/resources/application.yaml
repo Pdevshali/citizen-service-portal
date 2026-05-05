@@ -18,3 +18,10 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
         spring.json.trusted.packages: 'com.pdev.ekyc_service.kafka.events'
+
+feign:
+  client:
+    config:
+      citizen-service:
+        url: http://localhost:8081
+
