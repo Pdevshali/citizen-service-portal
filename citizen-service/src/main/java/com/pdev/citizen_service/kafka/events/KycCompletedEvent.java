@@ -1,5 +1,6 @@
 package com.pdev.citizen_service.kafka.events;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.pdev.citizen_service.model.KycStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KycCompletedEvent {
     private String citizenId;
     private KycStatus status; // "VERIFIED"

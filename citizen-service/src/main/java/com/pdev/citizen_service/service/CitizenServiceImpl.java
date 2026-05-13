@@ -4,6 +4,7 @@ import com.pdev.citizen_service.dto.*;
 import com.pdev.citizen_service.exception.CitizenAlreadyExistsException;
 import com.pdev.citizen_service.exception.CitizenNotFoundException;
 import com.pdev.citizen_service.exception.KycNotVerifiedException;
+import com.pdev.citizen_service.kafka.events.DocumentFetchRequestedEvent;
 import com.pdev.citizen_service.kafka.events.KycInitiationEvent;
 import com.pdev.citizen_service.kafka.producer.CitizenKafkaProducer;
 import com.pdev.citizen_service.model.Citizen;
@@ -126,16 +127,30 @@ public class CitizenServiceImpl implements CitizenService {
     }
 
     @Override
-    public void fetchDocument(String citizenId, DocumentFetchRequest request) {
-        log.info("fetching documents for citizenId: {}", citizenId);
-        Citizen citizen = citizenRepository.findById(citizenId)
-                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
+    public void fetchDocument(DocumentFetchRequest request) {
+        log.info("fetching documents for citizenId: {}", request.getCitizenId());
+        Citizen citizen = citizenRepository.findById(request.getCitizenId())
+                .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + request.getCitizenId() + " not found"));
 
         if (citizen.getKycStatus() != KycStatus.VERIFIED) {
             throw new KycNotVerifiedException("KYC must be verified to fetch documents");
         }
 
-        // TODO: Publish DocumentFetchRequestEvent to document-service via Kafka
+        // Convert documentType string to enum
+        log.info("Publishing DocumentFetchRequestEvent for citizen: {}", request.getCitizenId());
+        try {
+             DocumentFetchRequestedEvent event = new DocumentFetchRequestedEvent(
+                     request.getCitizenId(),
+                     request.getAadhaarNumber(),
+                     request.getDocumentTypeAsEnum(),
+                     LocalDateTime.now()
+             );
+             kafkaProducer.publishDocumentFetchRequestEvent(event);
+            log.info("Document fetch request event published for citizen: {}", request.getCitizenId());
+        } catch (Exception e) {
+            log.error("Failed to publish document fetch request event for citizen {}: {}", request.getCitizenId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch document: " + e.getMessage(), e);
+        }
     }
 
     @Override

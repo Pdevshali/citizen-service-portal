@@ -6,6 +6,7 @@
       <list>
         <option value="$PROJECT_DIR$/citizen-service/pom.xml" />
         <option value="$PROJECT_DIR$/ekyc-service/pom.xml" />
+        <option value="$PROJECT_DIR$/document-service/pom.xml" />
       </list>
     </option>
   </component>

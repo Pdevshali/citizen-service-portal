@@ -1,9 +1,13 @@
 package com.pdev.citizen_service.kafka.consumer;
 
+import com.pdev.citizen_service.kafka.events.DocumentFetchCompletedEvent;
 import com.pdev.citizen_service.kafka.events.KycCompletedEvent;
 import com.pdev.citizen_service.model.Citizen;
+import com.pdev.citizen_service.model.Document;
+import com.pdev.citizen_service.model.DocumentType;
 import com.pdev.citizen_service.model.KycStatus;
 import com.pdev.citizen_service.repository.CitizenRepository;
+import com.pdev.citizen_service.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -17,9 +21,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class CitizenKafkaConsumer {
 
+    public static final String KYC_VERIFICATION_COMPLETED = "kyc.verification.completed";
+    public static final String CITIZEN_SERVICE_GROUP = "citizen-service-group";
+    public static final String DOCUMENT_FETCH_COMPLETED = "document.fetch.completed";
     private final CitizenRepository citizenRepository;
+    private final DocumentRepository documentRepository;
 
-    @KafkaListener(topics = "kyc.verification.completed", groupId = "citizen-service-group")
+    @KafkaListener(topics = KYC_VERIFICATION_COMPLETED, groupId = CITIZEN_SERVICE_GROUP)
     public void handleKycCompleted(KycCompletedEvent event) {
         try {
             log.info("Received KYC completed event for citizen: {}, status: {}",
@@ -49,6 +57,35 @@ public class CitizenKafkaConsumer {
 
         } catch (Exception e) {
             log.error("Error handling KYC completed event for citizen {}: {}",
+                    event.getCitizenId(), e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = DOCUMENT_FETCH_COMPLETED, groupId = CITIZEN_SERVICE_GROUP,
+            properties = {
+                    "spring.json.value.default.type=com.pdev.citizen_service.kafka.events.DocumentFetchCompletedEvent"
+            })
+    public void handleDocumentFetchCompleted(DocumentFetchCompletedEvent event) {
+        try{
+            log.info("Received Document Fetch Completed event for citizen: {}", event.getCitizenId());
+
+            Citizen citizen = citizenRepository.findById(event.getCitizenId())
+                    .orElseThrow(() -> new RuntimeException("Citizen not found for document update: " + event.getCitizenId()));
+            log.info("docType {}", event.getDocumentType());
+
+            Document document = Document.builder()
+                    .citizenId(event.getCitizenId())
+                    .documentType(DocumentType.valueOf(event.getDocumentType()))
+                    .documentUrl(event.getDocumentUrl())
+                    .fetchedAt(event.getCompletedAt())
+                    .build();
+
+            documentRepository.save(document);
+            log.info("Document record saved for citizen: {}, documentType: {}", event.getCitizenId(), event.getDocumentType());
+
+
+        } catch (Exception e) {
+            log.error("Error handling Document Fetch Completed event for citizen {}: {}",
                     event.getCitizenId(), e.getMessage(), e);
         }
     }

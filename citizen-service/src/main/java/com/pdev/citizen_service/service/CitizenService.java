@@ -13,7 +13,7 @@ public interface CitizenService {
 
     void initiateKyc(KycInitiateRequest request);
 
-    void fetchDocument(String citizenId, DocumentFetchRequest request);
+    void fetchDocument(DocumentFetchRequest request);
 
     void requestCertificate(String citizenId, CertificateRequest request);
 

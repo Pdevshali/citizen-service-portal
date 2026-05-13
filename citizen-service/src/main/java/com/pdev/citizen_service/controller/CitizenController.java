@@ -4,6 +4,8 @@ import com.pdev.citizen_service.dto.*;
 import com.pdev.citizen_service.model.Citizen;
 import com.pdev.citizen_service.service.CitizenService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,9 +45,9 @@ public class CitizenController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{id}/fetch-document")
-    public ResponseEntity<ApiResponse<Void>> fetchDocument(@PathVariable String id, @Valid @RequestBody DocumentFetchRequest request) {
-        citizenService.fetchDocument(id, request);
+    @PostMapping("/fetch-document")
+    public ResponseEntity<ApiResponse<Void>> fetchDocument(@Valid @RequestBody @NotNull DocumentFetchRequest request) {
+        citizenService.fetchDocument(request);
         ApiResponse<Void> response = new ApiResponse<>(true, "Document fetch request submitted successfully", null);
         return ResponseEntity.ok(response);
     }
