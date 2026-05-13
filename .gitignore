@@ -1,0 +1,6 @@
+# ── Local-only files (not pushed to GitHub) ─────────────────────────────────
+deep-dive-projects.html
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
