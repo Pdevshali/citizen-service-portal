@@ -42,6 +42,7 @@ public class EkycKafkaConsumer {
             GenerateOtpRequest request = GenerateOtpRequest.builder()
                     .citizenId(event.getCitizenId())
                     .aadhaarNumber(event.getAadhaarNumber())
+                    .mobile(event.getMobile())
                     .build();
 
             ekycService.generateOtp(request);

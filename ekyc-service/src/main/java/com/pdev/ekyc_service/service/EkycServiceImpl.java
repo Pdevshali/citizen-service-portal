@@ -39,7 +39,7 @@ public class EkycServiceImpl implements EkycService {
         log.info("Generating OTP for citizen: {}", request.getCitizenId());
         try {
             // Call UIDAI mock API to generate OTP
-            UidaiOtpResponse uidaiResponse = uidaiApiClient.generateOtp(request.getAadhaarNumber());
+            UidaiOtpResponse uidaiResponse = uidaiApiClient.generateOtp(request.getMobile(), request.getAadhaarNumber());
 
             Boolean citizenExists = citizenServiceClient.validateCitizen(request.getCitizenId());
             if (!citizenExists) {

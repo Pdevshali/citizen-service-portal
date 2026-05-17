@@ -18,4 +18,6 @@ public class KycInitiateRequest {
     @NotBlank(message = "Aadhaar number is required")
     @Pattern(regexp = "^\\d{12}$", message = "Aadhaar must be a 12-digit number")
     private String aadhaarNumber;
+
+    private Long phone;
 }

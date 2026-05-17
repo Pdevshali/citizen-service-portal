@@ -21,8 +21,8 @@ public class UidaiApiClient {
     private final KycSessionRepository kycSessionRepository;
     private static final String MOCK_OTP = "123456"; // Fixed mock OTP for testing
 
-    public UidaiOtpResponse generateOtp(String aadhaar) {
-        log.info("Mock UIDAI: Generating OTP for Aadhaar: {}", maskAadhaar(aadhaar));
+    public UidaiOtpResponse generateOtp(Long mobile, String aadhaar) {
+        log.info("Mock UIDAI: Generating OTP for Aadhaar: {} and mobile: {}", maskAadhaar(aadhaar), mobile);
         
         // Generate mock transaction ID
         String txnId = "TXN_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -31,7 +31,7 @@ public class UidaiApiClient {
         response.setTxnId(txnId);
         response.setStatus("success");
         response.setMessage("OTP generated successfully");
-        
+        log.info("OPTP is sent to the mobile number: {}", mobile);
         log.info("Mock UIDAI: OTP generated with txnId: {}", txnId);
         return response;
     }

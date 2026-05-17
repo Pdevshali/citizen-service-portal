@@ -116,6 +116,7 @@ public class CitizenServiceImpl implements CitizenService {
             KycInitiationEvent event = new KycInitiationEvent(
                     request.getCitizenId(),
                     request.getAadhaarNumber(),
+                    request.getPhone(),
                     citizen.getKycInitiatedAt()
             );
             kafkaProducer.publishKycInitiationEvent(event);
