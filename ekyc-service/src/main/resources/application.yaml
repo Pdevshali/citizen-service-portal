@@ -42,6 +42,15 @@ spring:
       ack-mode: RECORD
       concurrency: 2
 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/   # URL of your Eureka server
+    register-with-eureka: true      # register this service
+    fetch-registry: true            # also fetch the registry (for future Feign calls)
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+
 feign:
   client:
     config:
