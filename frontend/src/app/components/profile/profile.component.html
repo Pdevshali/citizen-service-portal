@@ -1,0 +1,61 @@
+<h2>Citizen Profile</h2>
+
+@if (loading) {
+  <p class="loading">Loading profile...</p>
+}
+
+@if (error) {
+  <div class="alert error">{{ error }}</div>
+}
+
+@if (profile) {
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="avatar">{{ profile.fullName.charAt(0) }}</div>
+      <div>
+        <h3>{{ profile.fullName }}</h3>
+        <span class="badge" [class]="getKycBadgeClass()">KYC: {{ profile.kycStatus }}</span>
+      </div>
+    </div>
+    <div class="profile-details">
+      <div class="detail-row">
+        <span class="label">Citizen ID</span>
+        <span class="value">{{ profile.id }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Email</span>
+        <span class="value">{{ profile.email }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Phone</span>
+        <span class="value">{{ profile.phone }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Date of Birth</span>
+        <span class="value">{{ profile.dateOfBirth }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Address</span>
+        <span class="value">{{ profile.address || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">State</span>
+        <span class="value">{{ profile.state || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Pincode</span>
+        <span class="value">{{ profile.pincode || '—' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Registered At</span>
+        <span class="value">{{ profile.registeredAt | date:'medium' }}</span>
+      </div>
+      @if (profile.kycVerifiedAt) {
+        <div class="detail-row">
+          <span class="label">KYC Verified At</span>
+          <span class="value">{{ profile.kycVerifiedAt | date:'medium' }}</span>
+        </div>
+      }
+    </div>
+  </div>
+}

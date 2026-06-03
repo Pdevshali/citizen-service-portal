@@ -1,0 +1,13 @@
+footer {
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 1.5rem;
+  margin-top: auto;
+  font-size: 0.875rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+footer p {
+  animation: pulse 3s ease-in-out infinite;
+}

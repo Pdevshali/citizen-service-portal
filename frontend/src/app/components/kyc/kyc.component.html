@@ -1,0 +1,81 @@
+<div class="kyc-container">
+  <h2>eKYC Verification</h2>
+
+  @if (!citizenId) {
+    <div class="alert info">
+      Please <a routerLink="/register">register</a> first or enter your Citizen ID in your profile.
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert error">{{ error }}</div>
+  }
+
+  @if (success) {
+    <div class="alert success">{{ success }}</div>
+  }
+
+  @if (step === 'initiate' && citizenId) {
+    <div class="card">
+      <h3>Step 1: Initiate KYC</h3>
+      <p>Enter your Aadhaar number to begin the KYC process.</p>
+      <div class="form-group">
+        <label for="kycAadhaar">Aadhaar Number *</label>
+        <input id="kycAadhaar" type="text" [(ngModel)]="aadhaar" placeholder="12-digit Aadhaar number" maxlength="12" />
+      </div>
+      <button class="btn btn-primary" (click)="onInitiateKyc()" [disabled]="loading || !aadhaar">
+        {{ loading ? 'Processing...' : 'Initiate KYC' }}
+      </button>
+    </div>
+  }
+
+  @if (step === 'otp') {
+    <div class="card">
+      <h3>Step 2: Verify OTP</h3>
+      <p>An OTP has been sent to your registered mobile number. Enter the OTP below.</p>
+      <div class="form-group">
+        <label for="otp">OTP *</label>
+        <input id="otp" type="text" [(ngModel)]="otp" placeholder="Enter 6-digit OTP" maxlength="6" />
+      </div>
+      <button class="btn btn-primary" (click)="onVerifyOtp()" [disabled]="loading || !otp">
+        {{ loading ? 'Verifying...' : 'Verify OTP' }}
+      </button>
+    </div>
+  }
+
+  @if (step === 'status' || (citizenId && aadhaar)) {
+    <div class="card actions-card">
+      <button class="btn btn-secondary" (click)="checkStatus()">Check KYC Status</button>
+    </div>
+  }
+
+  @if (kycStatus) {
+    <div class="card status-card">
+      <h3>KYC Status</h3>
+      <div class="detail-row">
+        <span class="label">Citizen ID</span>
+        <span class="value">{{ kycStatus.citizenId }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Status</span>
+        <span class="value">
+          <span class="badge" [class.badge-success]="kycStatus.status === 'VERIFIED'" [class.badge-warning]="kycStatus.status === 'INITIATED'" [class.badge-info]="kycStatus.status === 'PENDING'" [class.badge-danger]="kycStatus.status === 'FAILED'">
+            {{ kycStatus.status }}
+          </span>
+        </span>
+      </div>
+      @if (kycStatus.verifiedAt) {
+        <div class="detail-row">
+          <span class="label">Verified At</span>
+          <span class="value">{{ kycStatus.verifiedAt }}</span>
+        </div>
+      }
+      @if (kycStatus.demographicData) {
+        <div class="detail-row">
+          <span class="label">Demographic Data</span>
+          <span class="value"><pre>{{ kycStatus.demographicData }}</pre></span>
+        </div>
+      }
+    </div>
+  }
+</div>

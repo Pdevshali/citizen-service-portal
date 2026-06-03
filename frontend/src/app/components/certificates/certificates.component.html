@@ -1,0 +1,51 @@
+<div class="cert-container">
+  <h2>Request Certificate</h2>
+
+  @if (!citizenId) {
+    <div class="alert info">
+      Please <a routerLink="/register">register</a> first to request certificates.
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert error">{{ error }}</div>
+  }
+
+  @if (success) {
+    <div class="alert success">{{ success }}</div>
+  }
+
+  @if (citizenId) {
+    <div class="card">
+      <h3>Apply for a Certificate</h3>
+      <p>KYC must be verified before you can request certificates.</p>
+
+      <div class="form-group">
+        <label for="certType">Certificate Type *</label>
+        <select id="certType" [(ngModel)]="certificateType" class="form-select">
+          <option value="">-- Select Certificate --</option>
+          <option value="INCOME">Income Certificate</option>
+          <option value="CASTE">Caste Certificate</option>
+          <option value="DOMICILE">Domicile Certificate</option>
+          <option value="BIRTH">Birth Certificate</option>
+          <option value="DEATH">Death Certificate</option>
+          <option value="RESIDENCE">Residence Certificate</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="purpose">Purpose *</label>
+        <input id="purpose" type="text" [(ngModel)]="purpose" placeholder="e.g., Education, Employment, Govt Scheme" />
+      </div>
+
+      <div class="form-group">
+        <label for="remarks">Remarks (optional)</label>
+        <textarea id="remarks" [(ngModel)]="remarks" rows="3" placeholder="Any additional information..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" (click)="onSubmit()" [disabled]="loading || !certificateType || !purpose">
+        {{ loading ? 'Submitting...' : 'Submit Request' }}
+      </button>
+    </div>
+  }
+</div>

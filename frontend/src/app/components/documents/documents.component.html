@@ -1,0 +1,46 @@
+<div class="doc-container">
+  <h2>Fetch Documents</h2>
+
+  @if (!citizenId) {
+    <div class="alert info">
+      Please <a routerLink="/register">register</a> first to access document services.
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert error">{{ error }}</div>
+  }
+
+  @if (success) {
+    <div class="alert success">{{ success }}</div>
+  }
+
+  @if (citizenId) {
+    <div class="card">
+      <h3>Request Document from DigiLocker</h3>
+      <p>Select the document type you want to fetch. KYC must be verified to proceed.</p>
+
+      <div class="form-group">
+        <label for="docType">Document Type *</label>
+        <select id="docType" [(ngModel)]="documentType" class="form-select">
+          <option value="AADHAAR">Aadhaar Card</option>
+          <option value="PAN">PAN Card</option>
+          <option value="PASSPORT">Passport</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="aadhaar">Aadhaar Number (optional)</label>
+        <input id="aadhaar" type="text" [(ngModel)]="aadhaar" placeholder="12-digit Aadhaar" maxlength="12" />
+      </div>
+
+      <button class="btn btn-primary" (click)="onSubmit()" [disabled]="loading">
+        {{ loading ? 'Submitting...' : 'Request Document' }}
+      </button>
+    </div>
+
+    <div class="info-box">
+      <strong>Note:</strong> Document fetching is an asynchronous process. Once the document is retrieved from DigiLocker, it will be available in your profile.
+    </div>
+  }
+</div>

@@ -1,10 +1,8 @@
 package com.pdev.citizen_service.controller;
 
 import com.pdev.citizen_service.dto.*;
-import com.pdev.citizen_service.model.Citizen;
 import com.pdev.citizen_service.service.CitizenService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

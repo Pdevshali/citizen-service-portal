@@ -1,0 +1,37 @@
+<div class="hero">
+  <h1>Welcome to Citizen Services Portal</h1>
+  <p>Access government services, manage your KYC, fetch documents, and apply for certificates — all in one place.</p>
+  <div class="actions">
+    @if (!citizenId) {
+      <a routerLink="/register" class="btn btn-primary">Get Started — Register Now</a>
+      <a routerLink="/kyc" class="btn btn-secondary">Explore KYC</a>
+    } @else {
+      <a [routerLink]="['/profile', citizenId]" class="btn btn-primary">View My Profile</a>
+      <a routerLink="/kyc" class="btn btn-secondary">Complete KYC</a>
+      <a routerLink="/documents" class="btn btn-secondary">Fetch Documents</a>
+    }
+  </div>
+</div>
+
+<div class="cards">
+  <a routerLink="/register" class="card" #cardEl (mousemove)="onMouseMove($event, 0)" (mouseleave)="onMouseLeave(0)">
+    <div class="card-icon">&#128100;</div>
+    <h3>Citizen Registration</h3>
+    <p>Register as a citizen with your Aadhaar, email, and phone to access all services.</p>
+  </a>
+  <a routerLink="/kyc" class="card" #cardEl (mousemove)="onMouseMove($event, 1)" (mouseleave)="onMouseLeave(1)">
+    <div class="card-icon">&#128274;</div>
+    <h3>eKYC Verification</h3>
+    <p>Verify your identity through Aadhaar-based OTP verification (powered by UIDAI).</p>
+  </a>
+  <a routerLink="/documents" class="card" #cardEl (mousemove)="onMouseMove($event, 2)" (mouseleave)="onMouseLeave(2)">
+    <div class="card-icon">&#128196;</div>
+    <h3>Document Fetch</h3>
+    <p>Fetch your Aadhaar, PAN, and Passport documents from DigiLocker.</p>
+  </a>
+  <a routerLink="/certificates" class="card" #cardEl (mousemove)="onMouseMove($event, 3)" (mouseleave)="onMouseLeave(3)">
+    <div class="card-icon">&#128203;</div>
+    <h3>Certificate Requests</h3>
+    <p>Apply for government-issued certificates online.</p>
+  </a>
+</div>

@@ -1,0 +1,34 @@
+<div class="services-container">
+  <h2>Available Government Services</h2>
+
+  @if (loading) {
+    <p class="loading">Loading services...</p>
+  }
+
+  @if (error) {
+    <div class="alert error">{{ error }}</div>
+  }
+
+  @if (services.length > 0) {
+    <div class="service-list">
+      @for (service of services; track service.serviceId) {
+        <div class="service-card">
+          <div class="service-header">
+            <h3>{{ service.serviceName }}</h3>
+            <span class="badge" [class.badge-success]="service.status === 'ACTIVE'" [class.badge-warning]="service.status !== 'ACTIVE'">
+              {{ service.status }}
+            </span>
+          </div>
+          <p>{{ service.description }}</p>
+          <div class="service-meta">
+            @if (service.kycRequired) {
+              <span class="meta-tag kyc-tag">KYC Required</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (!loading) {
+    <p class="no-data">No services available at the moment.</p>
+  }
+</div>
