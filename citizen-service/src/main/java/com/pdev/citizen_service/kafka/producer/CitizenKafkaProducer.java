@@ -1,5 +1,6 @@
 package com.pdev.citizen_service.kafka.producer;
 
+import com.pdev.citizen_service.kafka.events.CertificateIssuanceRequestedEvent;
 import com.pdev.citizen_service.kafka.events.DocumentFetchRequestedEvent;
 import com.pdev.citizen_service.kafka.events.KycInitiationEvent;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +29,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CitizenKafkaProducer {
 
-    public static final String DOCUMENT_FETCH_REQUESTED = "document.fetch.requested";
+    public static final String DOCUMENT_FETCH_REQUESTED        = "document.fetch.requested";
+    public static final String CERTIFICATE_ISSUANCE_REQUESTED  = "certificate.issuance.requested";
+
     // KafkaTemplate<String, Object> matches the bean in KafkaConfig exactly
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    private static final String KYC_INITIATION_TOPIC      = "kyc.initiation.requested";
+    private static final String KYC_INITIATION_TOPIC = "kyc.initiation.requested";
     
     public void publishKycInitiationEvent(KycInitiationEvent event) {
         log.info("[KAFKA] Publishing KYC initiation: citizenId={}", event.getCitizenId());
@@ -53,6 +56,18 @@ public class CitizenKafkaProducer {
                         log.info("[KAFKA] ✓ Document fetch request sent: citizenId={}", event.getCitizenId());
                     else
                         log.error("[KAFKA] ✗ Document fetch request failed: {}", ex.getMessage(), ex);
+                });
+    }
+
+    public void publishCertificateIssuanceRequestedEvent(CertificateIssuanceRequestedEvent event) {
+        log.info("[KAFKA] Publishing certificate.issuance.requested: citizenId={}, type={}",
+                event.getCitizenId(), event.getCertificateType());
+        kafkaTemplate.send(CERTIFICATE_ISSUANCE_REQUESTED, event.getCitizenId(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex == null)
+                        log.info("[KAFKA] ✓ certificate.issuance.requested sent: citizenId={}", event.getCitizenId());
+                    else
+                        log.error("[KAFKA] ✗ certificate.issuance.requested failed: {}", ex.getMessage(), ex);
                 });
     }
 }

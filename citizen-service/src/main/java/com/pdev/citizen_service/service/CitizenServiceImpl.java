@@ -4,6 +4,7 @@ import com.pdev.citizen_service.dto.*;
 import com.pdev.citizen_service.exception.CitizenAlreadyExistsException;
 import com.pdev.citizen_service.exception.CitizenNotFoundException;
 import com.pdev.citizen_service.exception.KycNotVerifiedException;
+import com.pdev.citizen_service.kafka.events.CertificateIssuanceRequestedEvent;
 import com.pdev.citizen_service.kafka.events.DocumentFetchRequestedEvent;
 import com.pdev.citizen_service.kafka.events.KycInitiationEvent;
 import com.pdev.citizen_service.kafka.producer.CitizenKafkaProducer;
@@ -156,6 +157,8 @@ public class CitizenServiceImpl implements CitizenService {
 
     @Override
     public void requestCertificate(String citizenId, CertificateRequest request) {
+        log.info("requestCertificate called for citizenId={}, type={}", citizenId, request.getCertificateType());
+
         Citizen citizen = citizenRepository.findById(citizenId)
                 .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + citizenId + " not found"));
 
@@ -163,7 +166,21 @@ public class CitizenServiceImpl implements CitizenService {
             throw new KycNotVerifiedException("KYC must be verified to request certificates");
         }
 
-        // TODO: Publish CertificateIssuanceEvent to certificate-service via Kafka
+        try {
+            CertificateIssuanceRequestedEvent event = new CertificateIssuanceRequestedEvent(
+                    citizenId,
+                    request.getCertificateType(),
+                    request.getPurpose(),
+                    request.getRemarks()
+            );
+            kafkaProducer.publishCertificateIssuanceRequestedEvent(event);
+            log.info("Certificate issuance request published for citizenId={}, type={}",
+                    citizenId, request.getCertificateType());
+        } catch (Exception e) {
+            log.error("Failed to publish certificate issuance request for citizenId={}: {}",
+                    citizenId, e.getMessage(), e);
+            throw new RuntimeException("Failed to request certificate: " + e.getMessage(), e);
+        }
     }
 
     @Override
