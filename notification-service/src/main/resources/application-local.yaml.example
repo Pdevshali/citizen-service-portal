@@ -1,0 +1,26 @@
+# TEMPLATE: Copy this file to application-local.yaml and fill in real values
+# DO NOT commit application-local.yaml (it's in .gitignore to protect secrets)
+
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com          # Replace with your Gmail
+    password: your_app_password_here         # Replace with App Password (not regular password)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        debug: true
+
+notification:
+  email:
+    from: your-email@gmail.com              # Usually same as username
+    subject: Citizen Services Portal Notification
+
