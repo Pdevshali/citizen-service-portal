@@ -3,15 +3,19 @@ package com.pdev.ekyc_service.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.pdev.ekyc_service.kafka.events.KycInitiationEvent;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -25,6 +29,36 @@ import java.util.Map;
 @EnableKafka
 @Configuration
 public class KafkaConfig {
+
+    private static final String BOOTSTRAP_SERVERS = "localhost:39092";
+
+    // -------------------------------------------------------------------------
+    // Kafka Admin – auto-creates topics on startup so the service never fails
+    // with "topic not present in metadata" errors after a fresh container start.
+    // -------------------------------------------------------------------------
+
+    @Bean
+    public KafkaAdmin kafkaAdmin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        return new KafkaAdmin(configs);
+    }
+
+    @Bean
+    public NewTopic kycVerificationCompletedTopic() {
+        return TopicBuilder.name("kyc.verification.completed")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic kycInitiationEventTopic() {
+        return TopicBuilder.name("kyc.initiation.event")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -78,7 +112,7 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory(ObjectMapper objectMapper) {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put("bootstrap.servers", "localhost:9092");
+        configProps.put("bootstrap.servers", "localhost:39092");
         configProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         configProps.put("acks", "all");
         configProps.put("retries", 3);
@@ -97,7 +131,7 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, KycInitiationEvent> consumerFactory(ObjectMapper objectMapper) {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put("bootstrap.servers", "localhost:9092");
+        configProps.put("bootstrap.servers", "localhost:39092");
         configProps.put("group.id", "ekyc-service-group");
         configProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         configProps.put("auto.offset.reset", "earliest");

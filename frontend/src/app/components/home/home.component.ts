@@ -1,5 +1,6 @@
 import { Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -12,8 +13,10 @@ export class HomeComponent {
 
   @ViewChildren('cardEl', { read: ElementRef }) cards!: QueryList<ElementRef>;
 
+  constructor(private authService: AuthService) {}
+
   ngOnInit() {
-    this.citizenId = localStorage.getItem('citizenId') || '';
+    this.citizenId = this.authService.citizenId;
   }
 
   onMouseMove(event: MouseEvent, index: number) {

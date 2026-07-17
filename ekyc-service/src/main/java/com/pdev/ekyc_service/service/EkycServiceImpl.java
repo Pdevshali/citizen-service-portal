@@ -113,7 +113,7 @@ public class EkycServiceImpl implements EkycService {
             session.setDemographicDataEncrypted(encryptedDemographicData);
             kycSessionRepository.save(session);
 
-            // Publish event
+            // Publish event and wait for delivery (with timeout)
             KycCompletedEvent event = new KycCompletedEvent(
                     session.getCitizenId(),
                     KycStatus.VERIFIED,
@@ -122,7 +122,17 @@ public class EkycServiceImpl implements EkycService {
             );
 
             log.info("Publishing KYC completed event: {}", event);
-            kafkaProducer.publishKycCompleted(event);
+            try {
+                kafkaProducer.publishKycCompleted(event).get(5, java.util.concurrent.TimeUnit.SECONDS);
+                log.info("KYC completion event delivered successfully for citizen: {}", session.getCitizenId());
+            } catch (java.util.concurrent.TimeoutException e) {
+                log.warn("KYC completion event delivery timed out after 5 seconds for citizen: {}", session.getCitizenId());
+            } catch (java.util.concurrent.ExecutionException e) {
+                log.warn("KYC completion event send failed for citizen {}: {}. Continuing anyway.", session.getCitizenId(), e.getCause().getMessage());
+            } catch (InterruptedException e) {
+                log.warn("KYC completion event send was interrupted for citizen: {}", session.getCitizenId());
+                Thread.currentThread().interrupt();
+            }
 
             log.info("OTP verified via UIDAI for citizen: {}", session.getCitizenId());
 

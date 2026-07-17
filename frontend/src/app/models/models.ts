@@ -71,11 +71,37 @@ export interface DocumentFetchRequest {
 }
 
 export type DocumentType = 'AADHAAR' | 'PAN' | 'PASSPORT';
+export type FetchStatus = 'REQUESTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+
+export interface DocumentResponse {
+  id: number;
+  citizenId: string;
+  documentType: DocumentType;
+  status: FetchStatus;
+  documentUrl: string | null;
+  requestedAt: string | null;
+  completedAt: string | null;
+}
 
 export interface CertificateRequest {
   certificateType: string;
   purpose: string;
   remarks?: string;
+}
+
+export type CertificateStatus = 'PENDING' | 'GENERATED' | 'FAILED';
+
+export interface CertificateResponse {
+  id: string;
+  citizenId: string;
+  certificateType: string;
+  purpose: string;
+  status: CertificateStatus;
+  certificateNumber: string | null;
+  downloadUrl: string | null;
+  issuedAt: string | null;
+  remarks: string | null;
+  createdAt: string;
 }
 
 export interface ServiceRequestResponse {

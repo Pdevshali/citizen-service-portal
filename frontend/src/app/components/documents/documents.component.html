@@ -42,5 +42,39 @@
     <div class="info-box">
       <strong>Note:</strong> Document fetching is an asynchronous process. Once the document is retrieved from DigiLocker, it will be available in your profile.
     </div>
+
+    <div class="card records-card">
+      <div class="section-header">
+        <h3>Your Documents</h3>
+        <button class="btn btn-secondary" type="button" (click)="loadDocuments()" [disabled]="documentsLoading">
+          {{ documentsLoading ? 'Refreshing...' : 'Refresh' }}
+        </button>
+      </div>
+
+      @if (documentsLoading && documents.length === 0) {
+        <p class="empty-state">Loading documents...</p>
+      } @else if (documents.length === 0) {
+        <p class="empty-state">No document records found yet.</p>
+      } @else {
+        <div class="record-list">
+          @for (document of documents; track document.id) {
+            <div class="record-item">
+              <div>
+                <div class="record-title">{{ document.documentType }}</div>
+                <div class="record-meta">
+                  Requested {{ document.requestedAt | date:'medium' }}
+                </div>
+              </div>
+              <div class="record-actions">
+                <span [class]="statusClass(document.status)">{{ document.status }}</span>
+                @if (document.documentUrl) {
+                  <a class="link-button" [href]="document.documentUrl" target="_blank" rel="noopener">View</a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
   }
 </div>

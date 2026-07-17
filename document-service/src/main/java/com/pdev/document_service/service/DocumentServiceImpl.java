@@ -1,5 +1,6 @@
 package com.pdev.document_service.service;
 
+import com.pdev.document_service.dto.DocumentResponse;
 import com.pdev.document_service.kafka.events.DocumentFetchRequestedEvent;
 import com.pdev.document_service.kafka.events.DocumentFetchCompletedEvent;
 import com.pdev.document_service.kafka.producer.DocumentKafkaProducer;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +53,26 @@ public class DocumentServiceImpl implements DocumentService {
         log.info("document fetch completed with document url: {} ", documentUrl);
         kafkaProducer.publishDocumentFetchCompleted(completedEvent);
         log.info("document fetch completed event published for citizenId: {}", event.getCitizenId());
+    }
+
+    @Override
+    public List<DocumentResponse> getDocumentsByCitizenId(String citizenId) {
+        log.info("Fetching documents for citizenId={}", citizenId);
+        return repository.findByCitizenIdOrderByRequestedAtDesc(citizenId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private DocumentResponse mapToResponse(DocumentRecord record) {
+        return DocumentResponse.builder()
+                .id(record.getId())
+                .citizenId(record.getCitizenId())
+                .documentType(record.getDocumentType())
+                .status(record.getStatus())
+                .documentUrl(record.getDocumentUrl())
+                .requestedAt(record.getRequestedAt())
+                .completedAt(record.getCompletedAt())
+                .build();
     }
 }

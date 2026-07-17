@@ -10,5 +10,13 @@
       <a routerLink="/certificates" routerLinkActive="active">Certificates</a>
       <a [routerLink]="citizenId ? ['/services', citizenId] : '/register'" routerLinkActive="active">Services</a>
     </div>
+    <button
+      class="theme-toggle"
+      type="button"
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
+      [attr.title]="isDarkTheme ? 'Light theme' : 'Dark theme'">
+      <span class="theme-icon">{{ isDarkTheme ? '☀' : '☾' }}</span>
+    </button>
   </nav>
 </header>

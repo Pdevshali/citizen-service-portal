@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
-import { DocumentFetchRequest, DocumentType } from '../../models/models';
+import { DocumentService } from '../../services/document.service';
+import { DocumentFetchRequest, DocumentResponse, DocumentType } from '../../models/models';
 
 @Component({
   selector: 'app-documents',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './documents.component.html',
   styleUrl: './documents.component.css'
 })
@@ -15,10 +17,19 @@ export class DocumentsComponent {
   aadhaar = '';
   documentType: DocumentType = 'AADHAAR';
   loading = false;
+  documentsLoading = false;
   error = '';
   success = '';
+  documents: DocumentResponse[] = [];
 
-  constructor(private citizenService: CitizenService) {}
+  constructor(
+    private citizenService: CitizenService,
+    private documentService: DocumentService
+  ) {}
+
+  ngOnInit() {
+    this.loadDocuments();
+  }
 
   onSubmit() {
     if (!this.citizenId) return;
@@ -35,6 +46,7 @@ export class DocumentsComponent {
         this.loading = false;
         if (res.success) {
           this.success = `Document fetch request for ${this.documentType} has been submitted. You will be notified once it's ready.`;
+          this.loadDocuments();
         }
       },
       error: (err) => {
@@ -42,5 +54,26 @@ export class DocumentsComponent {
         this.error = err.error?.message || 'Failed to request document fetch.';
       }
     });
+  }
+
+  loadDocuments() {
+    if (!this.citizenId) return;
+    this.documentsLoading = true;
+    this.documentService.listDocuments(this.citizenId).subscribe({
+      next: (res) => {
+        this.documentsLoading = false;
+        if (res.success) {
+          this.documents = res.data;
+        }
+      },
+      error: (err) => {
+        this.documentsLoading = false;
+        this.error = err.error?.message || 'Failed to load documents.';
+      }
+    });
+  }
+
+  statusClass(status: string): string {
+    return `status ${status.toLowerCase().replace('_', '-')}`;
   }
 }

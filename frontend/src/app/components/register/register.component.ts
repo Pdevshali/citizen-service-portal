@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
+import { AuthService } from '../../services/auth.service';
 import { CitizenRegistrationRequest } from '../../models/models';
 
 @Component({
@@ -28,6 +29,7 @@ export class RegisterComponent {
 
   constructor(
     private citizenService: CitizenService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -41,8 +43,8 @@ export class RegisterComponent {
         if (res.success) {
           this.registeredId = res.data.id;
           this.success = `Registration successful! Your Citizen ID: ${res.data.id}`;
-          localStorage.setItem('citizenId', res.data.id);
-          localStorage.setItem('citizenName', res.data.fullName);
+          // Use AuthService so the header and all subscribers update immediately
+          this.authService.setCitizenId(res.data.id, res.data.fullName);
         }
       },
       error: (err) => {

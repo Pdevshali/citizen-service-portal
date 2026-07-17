@@ -47,5 +47,42 @@
         {{ loading ? 'Submitting...' : 'Submit Request' }}
       </button>
     </div>
+
+    <div class="card records-card">
+      <div class="section-header">
+        <h3>Your Certificates</h3>
+        <button class="btn btn-secondary" type="button" (click)="loadCertificates()" [disabled]="certificatesLoading">
+          {{ certificatesLoading ? 'Refreshing...' : 'Refresh' }}
+        </button>
+      </div>
+
+      @if (certificatesLoading && certificates.length === 0) {
+        <p class="empty-state">Loading certificates...</p>
+      } @else if (certificates.length === 0) {
+        <p class="empty-state">No certificate records found yet.</p>
+      } @else {
+        <div class="record-list">
+          @for (certificate of certificates; track certificate.id) {
+            <div class="record-item">
+              <div>
+                <div class="record-title">{{ certificate.certificateType }}</div>
+                <div class="record-meta">
+                  Requested {{ certificate.createdAt | date:'medium' }}
+                  @if (certificate.certificateNumber) {
+                    <span> | No. {{ certificate.certificateNumber }}</span>
+                  }
+                </div>
+              </div>
+              <div class="record-actions">
+                <span [class]="statusClass(certificate.status)">{{ certificate.status }}</span>
+                @if (certificate.downloadUrl) {
+                  <a class="link-button" [href]="certificate.downloadUrl" target="_blank" rel="noopener">Download</a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
   }
 </div>

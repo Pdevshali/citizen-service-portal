@@ -42,7 +42,7 @@ export class KycComponent {
         if (res.success) {
           this.step = 'otp';
           this.success = 'KYC initiated! OTP has been sent to your registered mobile.';
-          this.generateOtp();
+          setTimeout(() => this.generateOtp(), 500);
         }
       },
       error: (err) => {
