@@ -2,10 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, GenerateOtpRequest, GenerateOtpResponse, VerifyOtpRequest, VerifyOtpResponse, KycStatusResponse } from '../models/models';
+import { apiGatewayUrl } from '../core/keycloak.config';
 
+/**
+ * Service for eKYC-related API calls.
+ * Routed through API Gateway — Bearer token auto-attached by KeycloakBearerInterceptor.
+ */
 @Injectable({ providedIn: 'root' })
 export class KycService {
-  private baseUrl = 'http://localhost:8082/api/kyc';
+  /** Route through API Gateway instead of directly to ekyc-service:8082 */
+  private baseUrl = `${apiGatewayUrl}/api/kyc`;
 
   constructor(private http: HttpClient) {}
 

@@ -26,6 +26,16 @@ public class Citizen {
     @Column(name = "id", updatable = false, nullable = false, unique = true)
     private String id;
 
+    // ── Keycloak identity link ───────────────────────────────────────────────
+
+    /**
+     * Keycloak subject claim (sub) — uniquely identifies the Keycloak account.
+     * Populated when the user completes onboarding after Keycloak login.
+     * Initially nullable so existing rows are unaffected.
+     */
+    @Column(name = "keycloak_user_id", unique = true)
+    private String keycloakUserId;
+
     // ── Personal details ────────────────────────────────────────────────────
 
     @Column(name = "full_name", nullable = false)

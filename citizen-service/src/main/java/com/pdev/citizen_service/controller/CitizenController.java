@@ -17,6 +17,8 @@ public class CitizenController {
 
     private final CitizenService citizenService;
 
+    // ── Public / legacy endpoints ────────────────────────────────────────────
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<CitizenProfileResponse>> registerCitizen(@Valid @RequestBody CitizenRegistrationRequest request) {
         CitizenProfileResponse citizen = citizenService.registerCitizen(request);
@@ -63,4 +65,47 @@ public class CitizenController {
         ApiResponse<List<ServiceRequestResponse>> response = new ApiResponse<>(true, "Services retrieved successfully", services);
         return ResponseEntity.ok(response);
     }
+
+    // ── Keycloak-authenticated "current user" endpoints ──────────────────────
+
+    /**
+     * Returns the citizen profile for the currently authenticated user.
+     *
+     * <p>Identity is derived from the {@code X-User-Id} header, which the API
+     * Gateway populates from the validated JWT {@code sub} claim. The client
+     * never supplies the citizenId — there is no ID in the URL.
+     *
+     * <p>Returns 404 when the authenticated user has not yet completed onboarding.
+     * The Angular app uses this signal to redirect to /onboarding.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<CitizenProfileResponse>> getMe(
+            @RequestHeader("X-User-Id") String keycloakUserId) {
+        CitizenProfileResponse profile = citizenService.getMe(keycloakUserId);
+        ApiResponse<CitizenProfileResponse> response =
+                new ApiResponse<>(true, "Profile retrieved successfully", profile);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Creates the citizen profile for the currently authenticated user.
+     *
+     * <p>{@code keycloakUserId} (X-User-Id) and {@code email} (X-User-Email) are
+     * injected from gateway headers — the request body must NOT contain them.
+     * This prevents a malicious client from impersonating another Keycloak account.
+     *
+     * <p>Returns 409 (via {@link com.pdev.citizen_service.exception.CitizenAlreadyExistsException})
+     * when the user has already onboarded.
+     */
+    @PostMapping("/me/onboarding")
+    public ResponseEntity<ApiResponse<CitizenProfileResponse>> onboardCitizen(
+            @RequestHeader("X-User-Id")    String keycloakUserId,
+            @RequestHeader("X-User-Email") String email,
+            @Valid @RequestBody OnboardingRequest request) {
+        CitizenProfileResponse citizen = citizenService.onboardCitizen(keycloakUserId, email, request);
+        ApiResponse<CitizenProfileResponse> response =
+                new ApiResponse<>(true, "Citizen onboarded successfully", citizen);
+        return ResponseEntity.ok(response);
+    }
 }
+

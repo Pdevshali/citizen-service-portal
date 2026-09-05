@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class GrievanceSubmitRequest {
 
-    @NotBlank(message = "Citizen ID is required")
+    // citizenId is optional in the request; server will derive from the authenticated principal when omitted.
     private String citizenId;
 
     @NotBlank(message = "Title is required")

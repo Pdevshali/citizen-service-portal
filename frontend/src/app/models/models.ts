@@ -15,6 +15,21 @@ export interface CitizenRegistrationRequest {
   pincode?: string;
 }
 
+/**
+ * Payload for POST /api/citizens/me/onboarding.
+ * Intentionally omits email and keycloakUserId — those are
+ * derived exclusively from the JWT on the backend.
+ */
+export interface OnboardingRequest {
+  fullName: string;
+  phone: string;
+  dateOfBirth: string;   // ISO date yyyy-MM-dd
+  aadhaarNumber: string;
+  address?: string;
+  state?: string;
+  pincode?: string;
+}
+
 export interface CitizenProfileResponse {
   id: string;
   fullName: string;
@@ -110,4 +125,38 @@ export interface ServiceRequestResponse {
   description: string;
   status: string;
   kycRequired: boolean;
+}
+
+// Grievance types
+export type GrievanceCategory = 'SERVICE_DELIVERY' | 'DOCUMENT_ISSUES' | 'INCORRECT_CERTIFICATE' | 'BILLING' | 'TECHNICAL' | 'OTHER';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type GrievanceStatus = 'SUBMITTED' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'REJECTED';
+
+export interface GrievanceSubmitRequest {
+  citizenId?: string; // optional; server will derive if omitted
+  title: string;
+  description: string;
+  category: GrievanceCategory;
+  priority: Priority;
+  attachmentUrl?: string;
+}
+
+export interface GrievanceResponse {
+  id: string;
+  citizenId: string;
+  referenceNumber: string;
+  title: string;
+  description: string;
+  category: GrievanceCategory;
+  status: GrievanceStatus;
+  priority: Priority;
+  submittedAt: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+  closedAt?: string;
+  expectedResolutionDate?: string;
+  assignedOfficer?: string;
+  resolutionNotes?: string;
+  attachmentUrl?: string;
+  updatedAt?: string;
 }

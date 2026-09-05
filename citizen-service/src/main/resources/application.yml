@@ -64,6 +64,7 @@ eureka:
     fetch-registry: true            # also fetch the registry (for future Feign calls)
   instance:
     instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
 
 logging:
   level:

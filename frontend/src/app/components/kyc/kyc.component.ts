@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
 import { KycService } from '../../services/kyc.service';
+import { AuthService } from '../../services/auth.service';
 import { KycInitiateRequest, GenerateOtpRequest, VerifyOtpRequest, KycStatusResponse } from '../../models/models';
 
 @Component({
@@ -12,7 +13,6 @@ import { KycInitiateRequest, GenerateOtpRequest, VerifyOtpRequest, KycStatusResp
   styleUrl: './kyc.component.css'
 })
 export class KycComponent {
-  citizenId = localStorage.getItem('citizenId') || '';
   aadhaar = '';
   txnId = '';
   otp = '';
@@ -24,8 +24,14 @@ export class KycComponent {
 
   constructor(
     private citizenService: CitizenService,
-    private kycService: KycService
+    private kycService: KycService,
+    private authService: AuthService
   ) {}
+
+  /** Current portal citizen ID managed by AuthService/sessionStorage. */
+  get citizenId(): string {
+    return this.authService.citizenId;
+  }
 
   onInitiateKyc() {
     if (!this.citizenId || !this.aadhaar) return;

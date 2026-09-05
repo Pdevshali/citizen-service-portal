@@ -9,17 +9,17 @@ import org.springframework.stereotype.Service;
 public class GrievanceKafkaConsumer {
 
     @KafkaListener(topics = "kyc.completed", groupId = "grievance-service-group", containerFactory = "kafkaListenerContainerFactory")
-    public void onKycCompleted(String message) {
-        log.info("[KAFKA] Received event from kyc.completed: {}", message);
+    public void onKycCompleted(Object message) {
+        log.info("[KAFKA] Received event from kyc.completed: {} ({})", message, message != null ? message.getClass().getName() : "null");
     }
 
     @KafkaListener(topics = "document.fetch.completed", groupId = "grievance-service-group", containerFactory = "kafkaListenerContainerFactory")
-    public void onDocumentFetchCompleted(String message) {
-        log.info("[KAFKA] Received event from document.fetch.completed: {}", message);
+    public void onDocumentFetchCompleted(Object message) {
+        log.info("[KAFKA] Received event from document.fetch.completed: {} ({})", message, message != null ? message.getClass().getName() : "null");
     }
 
     @KafkaListener(topics = "certificate.ready", groupId = "grievance-service-group", containerFactory = "kafkaListenerContainerFactory")
-    public void onCertificateReady(String message) {
-        log.info("[KAFKA] Received event from certificate.ready: {}", message);
+    public void onCertificateReady(Object message) {
+        log.info("[KAFKA] Received event from certificate.ready: {} ({})", message, message != null ? message.getClass().getName() : "null");
     }
 }

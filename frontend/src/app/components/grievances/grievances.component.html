@@ -1,0 +1,47 @@
+<div class="grievance-page">
+  <h2>My Grievances</h2>
+
+  <section class="submit-card">
+    <h3>Submit a Grievance</h3>
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+    <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+    <div class="form-group">
+      <label>Title</label>
+      <input [(ngModel)]="title" class="form-control" placeholder="Short title" />
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea [(ngModel)]="description" class="form-control" rows="4" placeholder="Describe the issue in detail"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select [(ngModel)]="category" class="form-control">
+          <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select [(ngModel)]="priority" class="form-control">
+          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" (click)="submit()" [disabled]="loading">Submit Grievance</button>
+  </section>
+
+  <section class="list-card">
+    <h3>Your Submitted Grievances</h3>
+    <div *ngIf="grievances?.length === 0">No grievances submitted yet.</div>
+
+    <ul class="grievance-list">
+      <li *ngFor="let g of grievances">
+        <div class="ref">{{ g.referenceNumber }} — <strong>{{ g.title }}</strong></div>
+        <div class="meta">Status: {{ g.status }} | Priority: {{ g.priority }} | Submitted: {{ g.submittedAt | date:'short' }}</div>
+        <div class="desc">{{ g.description }}</div>
+      </li>
+    </ul>
+  </section>
+</div>

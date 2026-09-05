@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
 import { DocumentService } from '../../services/document.service';
+import { AuthService } from '../../services/auth.service';
 import { DocumentFetchRequest, DocumentResponse, DocumentType } from '../../models/models';
 
 @Component({
@@ -13,7 +14,10 @@ import { DocumentFetchRequest, DocumentResponse, DocumentType } from '../../mode
   styleUrl: './documents.component.css'
 })
 export class DocumentsComponent {
-  citizenId = localStorage.getItem('citizenId') || '';
+  // Keep the portal ID in sync with the authenticated session.  Onboarding
+  // stores this value through AuthService/sessionStorage; reading localStorage
+  // here made registered users appear unregistered.
+  citizenId = '';
   aadhaar = '';
   documentType: DocumentType = 'AADHAAR';
   loading = false;
@@ -24,10 +28,12 @@ export class DocumentsComponent {
 
   constructor(
     private citizenService: CitizenService,
-    private documentService: DocumentService
+    private documentService: DocumentService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    this.citizenId = this.authService.citizenId;
     this.loadDocuments();
   }
 

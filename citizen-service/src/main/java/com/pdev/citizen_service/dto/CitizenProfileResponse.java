@@ -1,5 +1,6 @@
 package com.pdev.citizen_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pdev.citizen_service.model.KycStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CitizenProfileResponse {
+
+    @JsonIgnore
+    private String keycloakUserId;
 
     private String id;
     private String fullName;

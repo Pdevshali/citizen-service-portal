@@ -68,6 +68,7 @@ public class CitizenServiceImpl implements CitizenService {
 
     private CitizenProfileResponse mapToCitizenResponse(Citizen citizen) {
         return CitizenProfileResponse.builder()
+                .keycloakUserId(citizen.getKeycloakUserId())
                 .id(citizen.getId())
                 .fullName(citizen.getFullName())
                 .email(citizen.getEmail())
@@ -203,4 +204,67 @@ public class CitizenServiceImpl implements CitizenService {
         log.info("Checking if citizen with id {} exists", id);
         return citizenRepository.existsById(id);
     }
+
+    // ── Keycloak-authenticated "current user" operations ─────────────────────
+
+    /**
+     * Returns the citizen profile linked to the given Keycloak user ID.
+     * Called by GET /api/citizens/me — keycloakUserId comes from the JWT
+     * (X-User-Id header forwarded by the gateway).
+     */
+    @Override
+    public CitizenProfileResponse getMe(String keycloakUserId) {
+        log.info("getMe called for keycloakUserId: {}", keycloakUserId);
+        Citizen citizen = citizenRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new CitizenNotFoundException(
+                        "No citizen profile found for the authenticated user. Please complete onboarding."));
+        return mapToCitizenResponse(citizen);
+    }
+
+    /**
+     * Creates a new citizen profile linked to the authenticated Keycloak account.
+     * Called by POST /api/citizens/me/onboarding.
+     *
+     * <p>The {@code keycloakUserId} and {@code email} are derived from the JWT
+     * (X-User-Id and X-User-Email headers); the client cannot supply them.
+     */
+    @Override
+    public CitizenProfileResponse onboardCitizen(String keycloakUserId, String email, OnboardingRequest request) {
+        log.info("onboardCitizen called for keycloakUserId: {}", keycloakUserId);
+
+        // Guard: already onboarded
+        if (citizenRepository.existsByKeycloakUserId(keycloakUserId)) {
+            throw new CitizenAlreadyExistsException(
+                    "A citizen profile already exists for the authenticated user.");
+        }
+        // Guard: phone uniqueness
+        if (citizenRepository.existsByPhone(request.getPhone())) {
+            throw new CitizenAlreadyExistsException(
+                    "Citizen with phone " + request.getPhone() + " already exists");
+        }
+        // Guard: Aadhaar uniqueness
+        if (citizenRepository.existsByAadhaarNumber(request.getAadhaarNumber())) {
+            throw new CitizenAlreadyExistsException(
+                    "Citizen with Aadhaar " + request.getAadhaarNumber() + " already exists");
+        }
+
+        Citizen citizen = Citizen.builder()
+                .keycloakUserId(keycloakUserId)
+                .email(email)
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .dateOfBirth(request.getDateOfBirth())
+                .aadhaarNumber(request.getAadhaarNumber())
+                .address(request.getAddress())
+                .state(request.getState())
+                .pincode(request.getPincode())
+                .kycStatus(KycStatus.PENDING)
+                .build();
+
+        Citizen savedCitizen = citizenRepository.save(citizen);
+        log.info("Citizen onboarded successfully: citizenId={}, keycloakUserId={}",
+                savedCitizen.getId(), keycloakUserId);
+        return mapToCitizenResponse(savedCitizen);
+    }
 }
+

@@ -1,0 +1,84 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: api-gateway
+
+  # ─── Security: Keycloak JWT Validation ───────────────────────────────────────
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak's issuer URI — gateway fetches JWKS from this realm to validate tokens offline
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/citizen-portal}
+
+  # ─── Spring Cloud Gateway Routes ─────────────────────────────────────────────
+  cloud:
+    gateway:
+      # Enable load-balanced routing via Eureka (lb:// prefix)
+      discovery:
+        locator:
+          enabled: false  # We define routes explicitly below, not auto-discovery
+      routes:
+        - id: citizen-service
+          uri: lb://CITIZEN-SERVICE
+          predicates:
+            - Path=/api/citizens/**
+
+        - id: ekyc-service
+          uri: lb://EKYC-SERVICE
+          predicates:
+            - Path=/api/kyc/**
+
+        - id: document-service
+          uri: lb://DOCUMENT-SERVICE
+          predicates:
+            - Path=/api/documents/**
+
+        - id: certificate-service
+          uri: lb://CERTIFICATE-SERVICE
+          predicates:
+            - Path=/api/certificates/**
+
+        - id: grievance-service
+          uri: lb://GRIEVANCE-SERVICE
+          predicates:
+            - Path=/api/grievances/**
+
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications/**
+
+# ─── Eureka Client ───────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
+
+# ─── Actuator ────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    com.pdev.api_gatway: DEBUG

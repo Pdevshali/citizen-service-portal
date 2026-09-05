@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
 import { CertificateService } from '../../services/certificate.service';
+import { AuthService } from '../../services/auth.service';
 import { CertificateRequest, CertificateResponse } from '../../models/models';
 
 @Component({
@@ -13,7 +14,9 @@ import { CertificateRequest, CertificateResponse } from '../../models/models';
   styleUrl: './certificates.component.css'
 })
 export class CertificatesComponent {
-  citizenId = localStorage.getItem('citizenId') || '';
+  // Onboarding stores the portal ID through AuthService/sessionStorage.
+  // Reading localStorage here incorrectly displayed the registration prompt.
+  citizenId = '';
   certificateType = '';
   purpose = '';
   remarks = '';
@@ -25,10 +28,12 @@ export class CertificatesComponent {
 
   constructor(
     private citizenService: CitizenService,
-    private certificateService: CertificateService
+    private certificateService: CertificateService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    this.citizenId = this.authService.citizenId;
     this.loadCertificates();
   }
 

@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { CitizenService } from '../../services/citizen.service';
 import { CitizenProfileResponse } from '../../models/models';
@@ -16,13 +15,11 @@ export class ProfileComponent {
   error = '';
 
   constructor(
-    private route: ActivatedRoute,
     private citizenService: CitizenService
   ) {}
 
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id')!;
-    this.citizenService.getProfile(id).subscribe({
+    this.citizenService.getMe().subscribe({
       next: (res) => {
         this.loading = false;
         if (res.success) {

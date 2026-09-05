@@ -3,13 +3,21 @@
     <a routerLink="/" class="logo">Citizen Services Portal</a>
     <div class="nav-links">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
-      <a routerLink="/register" routerLinkActive="active">Register</a>
-      <a [routerLink]="citizenId ? ['/profile', citizenId] : '/register'" routerLinkActive="active">Profile</a>
-      <a routerLink="/kyc" routerLinkActive="active">KYC</a>
-      <a routerLink="/documents" routerLinkActive="active">Documents</a>
-      <a routerLink="/certificates" routerLinkActive="active">Certificates</a>
-      <a [routerLink]="citizenId ? ['/services', citizenId] : '/register'" routerLinkActive="active">Services</a>
+
+      @if (isLoggedIn) {
+        <a routerLink="/profile" routerLinkActive="active">My Profile</a>
+        <a routerLink="/kyc" routerLinkActive="active">KYC</a>
+        <a routerLink="/documents" routerLinkActive="active">Documents</a>
+        <a routerLink="/certificates" routerLinkActive="active">Certificates</a>
+        <a routerLink="/grievances" routerLinkActive="active">Grievances</a>
+        <a [routerLink]="citizenId ? ['/services', citizenId] : '/profile'" routerLinkActive="active">Services</a>
+        <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+      } @else {
+        <button type="button" class="btn btn-secondary" (click)="login()">Login</button>
+        <button type="button" class="btn btn-primary" (click)="register()">Create Account</button>
+      }
     </div>
+
     <button
       class="theme-toggle"
       type="button"

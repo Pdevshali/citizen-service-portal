@@ -33,13 +33,19 @@ public class GrievanceServiceImpl implements GrievanceService {
 
     @Override
     public GrievanceResponse submitGrievance(GrievanceSubmitRequest request) {
-        log.info("Submitting grievance for citizen: {}", request.getCitizenId());
+        // Derive citizenId from request if present, otherwise use the authenticated principal (safer)
+        String citizenId = request.getCitizenId();
+        if (citizenId == null || citizenId.isBlank()) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            citizenId = (auth != null && auth.getName() != null) ? auth.getName() : null;
+        }
+        log.info("Submitting grievance for citizen: {}", citizenId);
         
         String referenceNumber = generateReferenceNumber();
         LocalDateTime expectedResolutionDate = calculateExpectedResolutionDate(request.getPriority());
         
         Grievance grievance = Grievance.builder()
-                .citizenId(request.getCitizenId())
+                .citizenId(citizenId)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .category(request.getCategory())

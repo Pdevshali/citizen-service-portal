@@ -2,11 +2,11 @@
   <h1>Welcome to Citizen Services Portal</h1>
   <p>Access government services, manage your KYC, fetch documents, and apply for certificates — all in one place.</p>
   <div class="actions">
-    @if (!citizenId) {
-      <a routerLink="/register" class="btn btn-primary">Get Started — Register Now</a>
-      <a routerLink="/kyc" class="btn btn-secondary">Explore KYC</a>
+    @if (!isLoggedIn) {
+      <button type="button" class="btn btn-primary" (click)="login()">Login</button>
+      <button type="button" class="btn btn-secondary" (click)="register()">Create Account</button>
     } @else {
-      <a [routerLink]="['/profile', citizenId]" class="btn btn-primary">View My Profile</a>
+      <a routerLink="/profile" class="btn btn-primary">My Profile</a>
       <a routerLink="/kyc" class="btn btn-secondary">Complete KYC</a>
       <a routerLink="/documents" class="btn btn-secondary">Fetch Documents</a>
     }
@@ -14,10 +14,10 @@
 </div>
 
 <div class="cards">
-  <a routerLink="/register" class="card" #cardEl (mousemove)="onMouseMove($event, 0)" (mouseleave)="onMouseLeave(0)">
+  <a routerLink="/onboarding" class="card" #cardEl (mousemove)="onMouseMove($event, 0)" (mouseleave)="onMouseLeave(0)">
     <div class="card-icon">&#128100;</div>
     <h3>Citizen Registration</h3>
-    <p>Register as a citizen with your Aadhaar, email, and phone to access all services.</p>
+    <p>Register as a citizen with your Keycloak account and complete your service profile.</p>
   </a>
   <a routerLink="/kyc" class="card" #cardEl (mousemove)="onMouseMove($event, 1)" (mouseleave)="onMouseLeave(1)">
     <div class="card-icon">&#128274;</div>

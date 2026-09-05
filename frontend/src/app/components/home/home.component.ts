@@ -9,14 +9,22 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
-  citizenId: string = '';
+  isLoggedIn = false;
 
   @ViewChildren('cardEl', { read: ElementRef }) cards!: QueryList<ElementRef>;
 
   constructor(private authService: AuthService) {}
 
   ngOnInit() {
-    this.citizenId = this.authService.citizenId;
+    this.isLoggedIn = this.authService.isLoggedIn();
+  }
+
+  login(): void {
+    this.authService.login();
+  }
+
+  register(): void {
+    this.authService.register();
   }
 
   onMouseMove(event: MouseEvent, index: number) {

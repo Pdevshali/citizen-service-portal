@@ -10,18 +10,20 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  citizenId: string = '';
+  isLoggedIn = false;
+  citizenId = '';
   isDarkTheme = false;
 
-  private authSub!: Subscription;
+  private authSub?: Subscription;
 
   constructor(private authService: AuthService) {}
 
   ngOnInit() {
-    // Subscribe so the header reacts immediately whenever a new citizen
-    // registers or logs in — no more stale citizenId in the navbar link.
-    this.authSub = this.authService.citizenId$.subscribe(id => {
-      this.citizenId = id;
+    this.refreshAuthState();
+
+    this.authSub = this.authService.citizenId$.subscribe(() => {
+      this.citizenId = this.authService.citizenId;
+      this.isLoggedIn = this.authService.isLoggedIn();
     });
 
     const savedTheme = localStorage.getItem('theme');
@@ -34,10 +36,27 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.authSub?.unsubscribe();
   }
 
+  login(): void {
+    this.authService.login();
+  }
+
+  register(): void {
+    this.authService.register();
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
   toggleTheme() {
     this.isDarkTheme = !this.isDarkTheme;
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
     this.applyTheme();
+  }
+
+  private refreshAuthState(): void {
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.citizenId = this.authService.citizenId;
   }
 
   private applyTheme() {

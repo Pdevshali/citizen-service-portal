@@ -69,6 +69,7 @@ eureka:
     fetch-registry: true
   instance:
     instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 logging:

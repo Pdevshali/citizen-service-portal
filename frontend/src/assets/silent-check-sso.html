@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Silent SSO Check</title>
+  </head>
+  <body>
+    <!--
+      This page is loaded silently in an iframe by Keycloak to check
+      if the user has an existing SSO session, without redirecting the main page.
+      It must be hosted at the same origin as the Angular app.
+    -->
+    <script>
+      parent.postMessage(location.href, location.origin);
+    </script>
+  </body>
+</html>

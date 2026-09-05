@@ -23,4 +23,14 @@ public interface CitizenRepository extends JpaRepository<Citizen, String> {
     boolean existsByPhone(String phone);
 
     boolean existsByAadhaarNumber(String aadhaarNumber);
+
+    // ── Keycloak identity lookup ──────────────────────────────────────────────
+
+    /**
+     * Look up a citizen by the Keycloak subject claim (JWT sub).
+     * Used by GET /api/citizens/me and POST /api/citizens/me/onboarding.
+     */
+    Optional<Citizen> findByKeycloakUserId(String keycloakUserId);
+
+    boolean existsByKeycloakUserId(String keycloakUserId);
 }
