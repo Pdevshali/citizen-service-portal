@@ -4,3 +4,15 @@ deep-dive-projects.html
 # ── IDE ───────────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
+
+# ── Local secrets / environment files ────────────────────────────────────────
+.env
+.env.local
+*.env.local
+set-local-env.ps1
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
+**/target/
+
+/DEPLOYMENT_PLAN.md
+/diagrams/architecture.mmd

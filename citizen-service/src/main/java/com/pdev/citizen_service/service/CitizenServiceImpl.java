@@ -90,9 +90,26 @@ public class CitizenServiceImpl implements CitizenService {
         Citizen citizen = citizenRepository.findById(request.getCitizenId())
                 .orElseThrow(() -> new CitizenNotFoundException("Citizen with id " + request.getCitizenId() + " not found"));
 
-        // Check if KYC is not already initiated
-        if (citizen.getKycStatus() != KycStatus.PENDING) {
-            throw new IllegalStateException("KYC already initiated or completed for citizen " + request.getCitizenId());
+        // Guard: block if already fully VERIFIED
+        if (citizen.getKycStatus() == KycStatus.VERIFIED) {
+            throw new IllegalStateException("KYC is already verified for citizen " + request.getCitizenId());
+        }
+
+        // Guard: if INITIATED, allow retry only if it has been stuck for more than 10 minutes
+        // (handles the case where ekyc-service was down and the OTP was never sent/received)
+        if (citizen.getKycStatus() == KycStatus.INITIATED) {
+            LocalDateTime initiatedAt = citizen.getKycInitiatedAt();
+            boolean stuckTooLong = initiatedAt == null ||
+                    initiatedAt.isBefore(LocalDateTime.now().minusMinutes(10));
+            if (!stuckTooLong) {
+                throw new IllegalStateException(
+                        "KYC is already in progress for citizen " + request.getCitizenId() +
+                        ". Please wait 10 minutes before retrying.");
+            }
+            // Stuck for too long — reset and allow re-initiation
+            log.warn("KYC was stuck in INITIATED for citizen {} since {}. Resetting for retry.",
+                    request.getCitizenId(), initiatedAt);
+            citizen.setKycStatus(KycStatus.PENDING);
         }
 
         // Validate Aadhaar number is registered

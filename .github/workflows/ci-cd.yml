@@ -1,0 +1,82 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKERHUB_REPO: your-dockerhub-org
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Build backend services (maven)
+        working-directory: ./
+        run: |
+          mvn -T 1C -DskipTests package -DskipITs -B
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build --silent
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push Docker images
+        run: |
+          set -e
+          SHA=${{ github.sha }}
+          services=(citizen-service ekyc-service grievance-service api-gatway notification-service document-service)
+          for svc in "${services[@]}"; do
+            echo "Building $svc"
+            docker build -t $DOCKERHUB_REPO/$svc:$SHA -f $svc/Dockerfile $svc
+            docker push $DOCKERHUB_REPO/$svc:$SHA
+            docker tag $DOCKERHUB_REPO/$svc:$SHA $DOCKERHUB_REPO/$svc:latest
+            docker push $DOCKERHUB_REPO/$svc:latest
+          done
+
+      - name: Trigger Render deploys (optional)
+        if: ${{ secrets.RENDER_API_KEY != '' }}
+        run: |
+          # Replace <service-id> with your Render service ids or use Render's dashboard to auto-deploy from Docker Hub tags
+          curl -s -X POST "https://api.render.com/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"serviceId":"<render-service-id>"}'
+
+      - name: Deploy frontend to Vercel (optional)
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel
+          cd frontend
+          vercel --prod --token $VERCEL_TOKEN --confirm

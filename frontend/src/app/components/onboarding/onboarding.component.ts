@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { CitizenService } from '../../services/citizen.service';
 import { AuthService } from '../../services/auth.service';
 import { OnboardingRequest } from '../../models/models';
@@ -18,7 +18,7 @@ import { OnboardingRequest } from '../../models/models';
  */
 @Component({
   selector: 'app-onboarding',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.css'
 })

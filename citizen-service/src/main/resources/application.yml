@@ -8,16 +8,16 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    baseline-version: 1
+    baseline-version: 0
 
   cloud:
     config:
       enabled: false    # No Config Server in this project — use local application.yml
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/citizenDb
-    username: postgres1
-    password: mypassword
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/citizenDb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres1}
+    password: ${SPRING_DATASOURCE_PASSWORD:mypassword}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -31,6 +31,10 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:39092}
+    properties:
+      security.protocol: ${SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: ${SPRING_KAFKA_PROPERTIES_SASL_MECHANISM:PLAIN}
+      sasl.jaas.config: ${SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG:}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -59,7 +63,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/   # URL of your Eureka server
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
     register-with-eureka: true      # register this service
     fetch-registry: true            # also fetch the registry (for future Feign calls)
   instance:
@@ -68,5 +72,5 @@ eureka:
 
 logging:
   level:
-    com.pdev.citizen_service: DEBUG
+    org.springframework.boot.context.config: DEBUG
     org.springframework.kafka: INFO
