@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface GrievanceRepository extends JpaRepository<Grievance, String> {
+public interface GrievanceRepository extends JpaRepository<Grievance, String>, GrievanceRepositoryCustom {
     
     Optional<Grievance> findByReferenceNumber(String referenceNumber);
     

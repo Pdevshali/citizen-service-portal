@@ -1,8 +1,10 @@
 package com.pdev.grievance_service.service;
 
 import com.pdev.grievance_service.dto.GrievanceResponse;
+import com.pdev.grievance_service.dto.GrievanceSearchRequest;
 import com.pdev.grievance_service.dto.GrievanceStatusUpdateRequest;
 import com.pdev.grievance_service.dto.GrievanceSubmitRequest;
+import com.pdev.grievance_service.dto.PageResponse;
 import com.pdev.grievance_service.model.GrievanceStatus;
 
 import java.util.List;
@@ -22,4 +24,7 @@ public interface GrievanceService {
     List<GrievanceResponse> checkSlaBreaches();
     
     GrievanceResponse resolveGrievance(String grievanceId, String resolutionNotes);
+
+    PageResponse<GrievanceResponse> searchGrievances(GrievanceSearchRequest request);
+
 }

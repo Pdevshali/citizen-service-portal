@@ -1,10 +1,7 @@
 package com.pdev.grievance_service.controller;
 
-import com.pdev.grievance_service.dto.ApiResponse;
-import com.pdev.grievance_service.dto.GrievanceResponse;
-import com.pdev.grievance_service.dto.GrievanceStatusUpdateRequest;
-import com.pdev.grievance_service.dto.GrievanceSubmitRequest;
-import com.pdev.grievance_service.dto.GrievanceResolveRequest;
+import com.pdev.grievance_service.dto.*;
+import com.pdev.grievance_service.dto.PageResponse;
 import com.pdev.grievance_service.model.GrievanceStatus;
 import com.pdev.grievance_service.service.GrievanceService;
 import jakarta.validation.Valid;
@@ -23,7 +20,7 @@ public class GrievanceController {
     private final GrievanceService grievanceService;
 
     @PostMapping("/submit")
-    @PreAuthorize("hasRole('CITIZEN')")
+    @PreAuthorize("hasAnyRole('CITIZEN','ADMIN')")
     public ResponseEntity<ApiResponse<GrievanceResponse>> submitGrievance(
             @Valid @RequestBody GrievanceSubmitRequest request) {
         GrievanceResponse grievance = grievanceService.submitGrievance(request);
@@ -47,6 +44,7 @@ public class GrievanceController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
 
     @PutMapping("/{grievanceId}/status")
         @PreAuthorize("hasAnyRole('ADMIN','OFFICER')")
@@ -123,6 +121,19 @@ public class GrievanceController {
                 .success(true)
                 .message("SLA check completed")
                 .data(breachedGrievances)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PageResponse<GrievanceResponse>>> searchGrievances(
+            @ModelAttribute GrievanceSearchRequest request) {
+        PageResponse<GrievanceResponse> pageResponse = grievanceService.searchGrievances(request);
+        ApiResponse<PageResponse<GrievanceResponse>> response = ApiResponse.<PageResponse<GrievanceResponse>>builder()
+                .success(true)
+                .message("Grievances retrieved successfully")
+                .data(pageResponse)
                 .build();
         return ResponseEntity.ok(response);
     }

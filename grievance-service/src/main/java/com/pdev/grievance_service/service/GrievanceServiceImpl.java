@@ -1,8 +1,10 @@
 package com.pdev.grievance_service.service;
 
 import com.pdev.grievance_service.dto.GrievanceResponse;
+import com.pdev.grievance_service.dto.GrievanceSearchRequest;
 import com.pdev.grievance_service.dto.GrievanceStatusUpdateRequest;
 import com.pdev.grievance_service.dto.GrievanceSubmitRequest;
+import com.pdev.grievance_service.dto.PageResponse;
 import com.pdev.grievance_service.exception.GrievanceNotFoundException;
 import com.pdev.grievance_service.kafka.events.GrievanceResolvedEvent;
 import com.pdev.grievance_service.kafka.events.GrievanceSlaBreachedEvent;
@@ -11,6 +13,7 @@ import com.pdev.grievance_service.kafka.producer.GrievanceKafkaProducer;
 import com.pdev.grievance_service.model.Grievance;
 import com.pdev.grievance_service.model.GrievanceStatus;
 import com.pdev.grievance_service.repository.GrievanceRepository;
+import com.pdev.grievance_service.util.QueryValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -203,6 +207,89 @@ public class GrievanceServiceImpl implements GrievanceService {
         return modelMapper.map(resolvedGrievance, GrievanceResponse.class);
     }
 
+    @Override
+    public PageResponse<GrievanceResponse> searchGrievances(
+            GrievanceSearchRequest request) {
+
+        // 1. Normalize page
+        int page = QueryValidator.normalizePage(
+                request.getPage()
+        );
+
+        // 2. Normalize size
+        int size = QueryValidator.normalizeSize(
+                request.getSize()
+        );
+
+        // 3. Allowed sorting fields
+        Map<String, String> allowedSortFields = Map.of(
+                "createdAt", "g.submitted_at",
+                "updatedAt", "g.updated_at",
+                "status", "g.status",
+                "title", "g.title"
+        );
+
+        // 4. Normalize sort field
+        String sortBy = QueryValidator.normalizeSortBy(
+                request.getSortBy(),
+                allowedSortFields
+        );
+
+        // 5. Normalize sort direction
+        String sortDir = QueryValidator.normalizeSortDir(
+                request.getSortDir()
+        );
+
+        // 6. Calculate database offset
+        int offset = page * size;
+
+        // 7. Put normalized values back into request
+        request.setPage(page);
+        request.setSize(size);
+        request.setSortBy(sortBy);
+        request.setSortDir(sortDir);
+
+        // 8. Fetch paginated data
+        List<Grievance> grievances =
+                grievanceRepository.searchGrievances(
+                        request,
+                        offset
+                );
+
+        // 9. Fetch total count (same filters, no LIMIT/OFFSET)
+        long totalElements = grievanceRepository.countGrievances(request);
+
+        // 10. Compute pagination metadata
+        int totalPages = size > 0
+                ? (int) Math.ceil((double) totalElements / size)
+                : 0;
+        boolean hasNext = (long) (page + 1) * size < totalElements;
+        boolean hasPrevious = page > 0;
+
+        // 11. Convert Entity -> Response DTO
+        List<GrievanceResponse> content = grievances.stream()
+                .map(grievance ->
+                        modelMapper.map(
+                                grievance,
+                                GrievanceResponse.class
+                        )
+                )
+                .toList();
+
+        // 12. Build and return PageResponse
+        return PageResponse.<GrievanceResponse>builder()
+                .content(content)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .hasNext(hasNext)
+                .hasPrevious(hasPrevious)
+                .sortBy(sortBy)
+                .sortDir(sortDir)
+                .build();
+    }
+
     private String generateReferenceNumber() {
         return "GRV-" + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")) 
                + "-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
@@ -216,4 +303,5 @@ public class GrievanceServiceImpl implements GrievanceService {
             case CRITICAL -> LocalDateTime.now().plus(2, ChronoUnit.DAYS);
         };
     }
+
 }
