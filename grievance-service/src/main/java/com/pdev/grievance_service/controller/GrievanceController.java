@@ -126,9 +126,22 @@ public class GrievanceController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CITIZEN')")
     public ResponseEntity<ApiResponse<PageResponse<GrievanceResponse>>> searchGrievances(
             @ModelAttribute GrievanceSearchRequest request) {
+
+        // Security: Citizens may only query their own grievances.
+        // We override citizenId with the authenticated principal so a CITIZEN
+        // cannot pass someone else's citizenId as a query param.
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder
+                        .getContext().getAuthentication();
+        boolean isCitizen = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_CITIZEN"));
+        if (isCitizen) {
+            request.setCitizenId(auth.getName());
+        }
+
         PageResponse<GrievanceResponse> pageResponse = grievanceService.searchGrievances(request);
         ApiResponse<PageResponse<GrievanceResponse>> response = ApiResponse.<PageResponse<GrievanceResponse>>builder()
                 .success(true)

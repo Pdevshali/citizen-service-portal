@@ -160,3 +160,30 @@ export interface GrievanceResponse {
   attachmentUrl?: string;
   updatedAt?: string;
 }
+
+/** Query parameters for GET /api/grievances/search */
+export interface GrievanceSearchParams {
+  citizenId?: string;
+  status?: GrievanceStatus;
+  search?: string;
+  priority?: Priority;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDir?: string;
+}
+
+/** Mirrors the backend PageResponse<T> */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  sortBy: string;
+  sortDir: string;
+}
