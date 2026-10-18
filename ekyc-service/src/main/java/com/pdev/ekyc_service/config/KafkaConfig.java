@@ -7,6 +7,7 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -30,8 +31,8 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    private static final String BOOTSTRAP_SERVERS = "localhost:39092";
-
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String BOOTSTRAP_SERVERS;
     // -------------------------------------------------------------------------
     // Kafka Admin – auto-creates topics on startup so the service never fails
     // with "topic not present in metadata" errors after a fresh container start.
@@ -54,7 +55,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic kycInitiationEventTopic() {
-        return TopicBuilder.name("kyc.initiation.event")
+        return TopicBuilder.name("kyc.initiation.requested")
                 .partitions(1)
                 .replicas(1)
                 .build();
@@ -112,7 +113,7 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory(ObjectMapper objectMapper) {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put("bootstrap.servers", "localhost:39092");
+        configProps.put("bootstrap.servers", BOOTSTRAP_SERVERS);
         configProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         configProps.put("acks", "all");
         configProps.put("retries", 3);
@@ -131,7 +132,7 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, KycInitiationEvent> consumerFactory(ObjectMapper objectMapper) {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put("bootstrap.servers", "localhost:39092");
+        configProps.put("bootstrap.servers", BOOTSTRAP_SERVERS);
         configProps.put("group.id", "ekyc-service-group");
         configProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         configProps.put("auto.offset.reset", "earliest");
