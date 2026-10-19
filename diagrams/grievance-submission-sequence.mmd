@@ -1,0 +1,21 @@
+%% Sequence diagram for submitting a grievance
+
+sequenceDiagram
+  participant U as User Browser
+  participant V as Vercel Frontend
+  participant G as API Gateway
+  participant K as Keycloak
+  participant S as Grievance Service
+  participant PG as Postgres
+  participant KF as Kafka
+  participant N as Notification Service
+  participant SMTP as SMTP/SendGrid
+
+  U->>V: Click Submit Grievance
+  V->>G: Submit grievance request
+  G->>K: Validate token (Introspect/JWKS)
+  G->>S: POST /api/grievances/submit
+  S->>PG: INSERT grievance
+  S->>KF: Produce grievance.submitted
+  KF->>N: Consume event and send notification
+  N->>SMTP: Send email

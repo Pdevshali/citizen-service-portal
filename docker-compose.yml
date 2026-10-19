@@ -1,147 +1,32 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Citizen Services Portal — Docker Compose
+# Usage:
+#   docker compose up -d                 # start all services
+#   docker compose up -d eureka-server   # start a single service
+#   docker compose logs -f citizen-service
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: citizen-services-portal
+
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - app-network
 
-  kafka:
-    image: confluentinc/cp-kafka:7.4.0
-    container_name: kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "39092:39092"
-      - "29092:29092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      # KAFKA_LISTENERS tells the broker what interfaces/ports to BIND to.
-      # PLAINTEXT binds to all interfaces on 39092 (accessible from host via localhost:39092).
-      # PLAINTEXT_INTERNAL binds to all interfaces on 29092 (used by services inside docker network).
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:39092,PLAINTEXT_INTERNAL://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:39092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    networks:
-      - app-network
-
-  kafka-init:
-    image: confluentinc/cp-kafka:7.4.0
-    container_name: kafka-init
-    depends_on:
-      - kafka
-    entrypoint: [ '/bin/sh', '-c' ]
-    command: |
-      "
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic kyc.verification.completed --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic kyc.initiation.event --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic grievance.submitted --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic document.fetch.requested --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic certificate.issuance.requested --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic notification.send --partitions 1 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:29092 --list
-      "
-    networks:
-      - app-network
-
-  # ─── Keycloak Identity Provider ───────────────────────────────────────────────
-  keycloak-db:
-    image: postgres:16-alpine
-    container_name: keycloak-db
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-    volumes:
-      - keycloak-db-data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:24.0.3
-    container_name: keycloak
-    command: start-dev
-    environment:
-      # Admin credentials — loaded from .env file (gitignored)
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      # Use PostgreSQL for persistent realm/user data
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-      # HTTP config
-      KC_HTTP_PORT: 8180
-      KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
-      KC_HTTP_ENABLED: "true"
-    ports:
-      - "8180:8180"
-    depends_on:
-      keycloak-db:
-        condition: service_healthy
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8180/health/ready || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  # ─── Microservice PostgreSQL Databases ────────────────────────────────────────
-  # Each service has its own isolated DB on a different host port.
-  # Port mapping: host_port:container_port
-  # Your application.yml default URLs match these host ports exactly.
+  # ─── Infrastructure ──────────────────────────────────────────────────────────
 
   postgres-citizen:
     image: postgres:16-alpine
     container_name: postgres-citizen
     environment:
       POSTGRES_DB: citizenDb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
     ports:
-      - "5433:5432"       # citizen-service connects to localhost:5433
+      - "5433:5432"
     volumes:
-      - pg-citizen-data:/var/lib/postgresql/data
+      - postgres-citizen-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - microservices-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d citizenDb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres-ekyc:
-    image: postgres:16-alpine
-    container_name: postgres-ekyc
-    environment:
-      POSTGRES_DB: kycSessionDb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
-    ports:
-      - "5437:5432"       # ekyc-service connects to localhost:5437
-    volumes:
-      - pg-ekyc-data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d kycSessionDb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d citizenDb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,16 +36,16 @@ services:
     container_name: postgres-document
     environment:
       POSTGRES_DB: documentdb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
     ports:
-      - "5434:5432"       # document-service connects to localhost:5434
+      - "5434:5432"
     volumes:
-      - pg-document-data:/var/lib/postgresql/data
+      - postgres-document-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - microservices-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d documentdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d documentdb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -170,16 +55,16 @@ services:
     container_name: postgres-certificate
     environment:
       POSTGRES_DB: certificateDb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
     ports:
-      - "5435:5432"       # certificate-service connects to localhost:5435
+      - "5435:5432"
     volumes:
-      - pg-certificate-data:/var/lib/postgresql/data
+      - postgres-certificate-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - microservices-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d certificateDb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d certificateDb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -189,16 +74,35 @@ services:
     container_name: postgres-notification
     environment:
       POSTGRES_DB: notificationDb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
     ports:
-      - "5436:5432"       # notification-service connects to localhost:5436
+      - "5436:5432"
     volumes:
-      - pg-notification-data:/var/lib/postgresql/data
+      - postgres-notification-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - microservices-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d notificationDb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d notificationDb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-ekyc:
+    image: postgres:16-alpine
+    container_name: postgres-ekyc
+    environment:
+      POSTGRES_DB: kycSessionDb
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres-ekyc-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d kycSessionDb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -208,29 +112,288 @@ services:
     container_name: postgres-grievance
     environment:
       POSTGRES_DB: grievanceDb
-      POSTGRES_USER: postgres1
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: ${POSTGRES_USER:-postgres1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
     ports:
-      - "5438:5432"       # grievance-service connects to localhost:5438
+      - "5438:5432"
     volumes:
-      - pg-grievance-data:/var/lib/postgresql/data
+      - postgres-grievance-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - microservices-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres1 -d grievanceDb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres1} -d grievanceDb"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-volumes:
-  keycloak-db-data:
-  pg-citizen-data:
-  pg-ekyc-data:
-  pg-document-data:
-  pg-certificate-data:
-  pg-notification-data:
-  pg-grievance-data:
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "39092:39092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:39092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:39092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_PORT: 8180
+    ports:
+      - "8180:8180"
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8180/health/ready || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # ─── Service Registry ─────────────────────────────────────────────────────────
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    image: citizen-portal/eureka-server:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── Backend Microservices ────────────────────────────────────────────────────
+
+  citizen-service:
+    build:
+      context: ./citizen-service
+      dockerfile: Dockerfile
+    container_name: citizen-service
+    image: citizen-portal/citizen-service:latest
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-citizen:5432/citizenDb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-citizen:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  ekyc-service:
+    build:
+      context: ./ekyc-service
+      dockerfile: Dockerfile
+    container_name: ekyc-service
+    image: citizen-portal/ekyc-service:latest
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-ekyc:5432/kycSessionDb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-ekyc:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  document-service:
+    build:
+      context: ./document-service
+      dockerfile: Dockerfile
+    container_name: document-service
+    image: citizen-portal/document-service:latest
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-document:5432/documentdb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-document:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  certificate-service:
+    build:
+      context: ./certificate-service
+      dockerfile: Dockerfile
+    container_name: certificate-service
+    image: citizen-portal/certificate-service:latest
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-certificate:5432/certificateDb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-certificate:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  grievance-service:
+    build:
+      context: ./grievance-service
+      dockerfile: Dockerfile
+    container_name: grievance-service
+    image: citizen-portal/grievance-service:latest
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-grievance:5432/grievanceDb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-grievance:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    image: citizen-portal/notification-service:latest
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-notification:5432/notificationDb
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres1}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-notification:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  # ─── API Gateway ──────────────────────────────────────────────────────────────
+
+  api-gateway:
+    build:
+      context: ./api-gatway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    image: citizen-portal/api-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_PREFER_IP_ADDRESS: "true"
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://keycloak:8180/realms/citizen-portal}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:4200}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  # ─── Frontend ─────────────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    image: citizen-portal/frontend:latest
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - microservices-net
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
 networks:
-  app-network:
+  microservices-net:
     driver: bridge
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  postgres-citizen-data:
+  postgres-document-data:
+  postgres-certificate-data:
+  postgres-notification-data:
+  postgres-ekyc-data:
+  postgres-grievance-data:
