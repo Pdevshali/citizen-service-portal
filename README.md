@@ -14,9 +14,9 @@ A Spring Boot microservices project simulating a government citizen-services por
 | Component | Platform / Host | Production URL |
 |---|---|---|
 | **Frontend Portal** | Vercel | [https://citizen-portal-frontend.vercel.app](https://citizen-portal-frontend.vercel.app) |
-| **API Gateway** | AWS EC2 (Nginx + SSL) | `https://api-gatway-citizen22.duckdns.org` |
-| **Identity & Access (IAM)** | AWS EC2 (Keycloak 24) | `https://citizen-keyclock22.duckdns.org` |
-| **Databases** | Neon Serverless PostgreSQL | Cloud Hosted (`keycloakdb2`, `citizenDb`) |
+| **API Gateway** | AWS EC2 (Nginx + SSL) | `https://api-gatway-citizexxxxxxxx.org` |
+| **Identity & Access (IAM)** | AWS EC2 (Keycloak 24) | `https://citizen-keycloccccxxx.org` |
+| **Databases** | Neon Serverless PostgreSQL | Cloud Hosted (`keycloakdxx`, `citizenxxxxxb`) |
 
 ---
 
@@ -70,7 +70,7 @@ A Spring Boot microservices project simulating a government citizen-services por
            ▼                                                   ▼
 ┌──────────────────────────────────────┐    ┌──────────────────────────────────────────────┐
 │  AWS EC2 — Keycloak 24 Auth Server   │    │  AWS EC2 — API Gateway (Nginx SSL Term.)    │
-│  https://citizen-keyclock22.duckdns  │    │  https://api-gatway-citizen22.duckdns.org    │
+│  https://citizen-xxxxxxxxxxxxxxxxxx  │    │  https://api-gatway-citizenxxxxxxxx   │
 ├──────────────────────────────────────┤    └──────────────────────┬───────────────────────┘
 │ Nginx (Port 443 with Let's Encrypt)  │                           │
 │   ↓                                  │             ┌─────────────┼─────────────┐
@@ -137,10 +137,10 @@ Kafka Event Flow:
 
 **Vercel Environment Variables:**
 ```env
-KEYCLOAK_URL=https://citizen-keyclock22.duckdns.org
-KEYCLOAK_REALM=citizen-portal
-KEYCLOAK_CLIENT_ID=citizen-portal-client
-API_GATEWAY_URL=https://api-gatway-citizen22.duckdns.org
+KEYCLOAK_URL=https://citizen-keyclockxxxxxxx
+KEYCLOAK_REALM=citizexxx
+KEYCLOAK_CLIENT_ID=citizen-porxxxxx
+API_GATEWAY_URL=https://api-gatway-citizenxxxxxx
 ```
 
 ### 2. Nginx SSL Reverse Proxy & CORS
@@ -149,13 +149,13 @@ Both Keycloak and API Gateway run on separate AWS EC2 instances with Nginx actin
 - Nginx on the API Gateway instance handles preflight `OPTIONS` requests and bypasses browser CORS restrictions cleanly.
 
 ### 3. Keycloak Production Configuration
-Keycloak runs with `--proxy=edge` and `KC_HOSTNAME_URL=https://citizen-keyclock22.duckdns.org` so all issued JWT tokens and metadata have HTTPS URLs matching Spring Security's expectations.
+Keycloak runs with `--proxy=edge` and `KC_HOSTNAME_URL=https://citizen-keyclockxxxx` so all issued JWT tokens and metadata have HTTPS URLs matching Spring Security's expectations.
 
 ---
 
 ## REST API Summary
 
-All requests pass through the **API Gateway** (`https://api-gatway-citizen22.duckdns.org` in prod or `http://localhost:8080` locally) with a Keycloak Bearer token:
+All requests pass through the **API Gateway** (`https://api-gatway-citizenxxxx` in prod or `http://localhost:8080` locally) with a Keycloak Bearer token:
 
 ```http
 Authorization: Bearer <keycloak_token>
